@@ -10,6 +10,12 @@
   "theme_color": "#101216",
   "icons": [
     {
+      "src": "/icons/Najeeb_2.O_LOGO.png",
+      "sizes": "188x186",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
