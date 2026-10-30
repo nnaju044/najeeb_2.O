@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const compression = require('compression');
 
@@ -17,14 +18,21 @@ const { formatDateLong, formatDateShort, weekdayShort, hourRangeLabel, formatTim
  * Build the Express app. Exported as a factory so tests can spin up an isolated
  * instance against an in-memory MongoDB.
  */
-function createApp({ mongoUrl, sessionSecret, secureCookies = false }) {
+function createApp({
+  mongoUrl = process.env.MONGODB_URI,
+  sessionSecret = process.env.SESSION_SECRET,
+  secureCookies = process.env.NODE_ENV === 'production' && process.env.COOKIE_INSECURE !== 'true',
+} = {}) {
   if (!mongoUrl) throw new Error('createApp requires a mongoUrl');
   if (!sessionSecret) throw new Error('createApp requires a session secret');
 
   const app = express();
   app.set('trust proxy', 1);
   app.set('view engine', 'ejs');
-  app.set('views', path.join(__dirname, 'views'));
+  const viewsDir = fs.existsSync(path.join(__dirname, 'views'))
+    ? path.join(__dirname, 'views')
+    : path.join(process.cwd(), 'views');
+  app.set('views', viewsDir);
   app.disable('x-powered-by');
 
   app.locals.appName = 'Jeebs 2.O';
@@ -38,8 +46,11 @@ function createApp({ mongoUrl, sessionSecret, secureCookies = false }) {
 
   app.use(securityHeaders());
   app.use(compression());
+  const publicDir = fs.existsSync(path.join(__dirname, 'public'))
+    ? path.join(__dirname, 'public')
+    : path.join(process.cwd(), 'public');
   app.use(
-    express.static(path.join(__dirname, 'public'), {
+    express.static(publicDir, {
       maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0,
       etag: true,
     })
@@ -84,4 +95,63 @@ function createApp({ mongoUrl, sessionSecret, secureCookies = false }) {
   return app;
 }
 
-module.exports = { createApp };
+let serverlessApp = null;
+let serverlessInitPromise = null;
+
+async function getOrCreateServerlessApp() {
+  if (serverlessApp) return serverlessApp;
+  if (!serverlessInitPromise) {
+    serverlessInitPromise = (async () => {
+      try {
+        require('dotenv').config();
+      } catch (_e) {}
+      const mongoUrl = process.env.MONGODB_URI;
+      if (!mongoUrl) {
+        throw new Error('MONGODB_URI environment variable is required.');
+      }
+      let sessionSecret = process.env.SESSION_SECRET;
+      if (!sessionSecret) {
+        if (process.env.NODE_ENV === 'production') {
+          throw new Error('SESSION_SECRET environment variable is required in production.');
+        }
+        sessionSecret = 'jeebs_2o_session_secret_dev_fallback';
+      }
+      const { connectDatabase } = require('./config/db');
+      const { ensureGlobalLibraries } = require('./services/seedService');
+      await connectDatabase(mongoUrl, { attempts: 3 });
+      await ensureGlobalLibraries();
+      serverlessApp = createApp({
+        mongoUrl,
+        sessionSecret,
+        secureCookies: process.env.COOKIE_INSECURE !== 'true',
+      });
+      return serverlessApp;
+    })();
+  }
+  return serverlessInitPromise;
+}
+
+/**
+ * Serverless function entry point for Vercel.
+ * Vercel expects the default export to be a function or server.
+ */
+async function serverlessHandler(req, res) {
+  try {
+    const app = await getOrCreateServerlessApp();
+    return app(req, res);
+  } catch (error) {
+    console.error('[vercel] Serverless error:', error);
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    const safeMessage = process.env.NODE_ENV === 'production'
+      ? 'An internal error occurred. Please check the server logs.'
+      : error.message;
+    res.end(`<!DOCTYPE html><html><body><h1>Server Error</h1><p>${safeMessage}</p></body></html>`);
+  }
+}
+
+// Preserve createApp named export for server.js and automated test harness
+serverlessHandler.createApp = createApp;
+serverlessHandler.default = serverlessHandler;
+
+module.exports = serverlessHandler;

@@ -22,6 +22,9 @@ function attachListeners() {
 
 async function connectDatabase(uri, { attempts = 5, delayMs = 1500 } = {}) {
   if (!uri) throw new Error('A MongoDB connection string is required');
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
   mongoose.set('strictQuery', true);
   if (!mongoose.connection.listeners('error').length) attachListeners();
 
