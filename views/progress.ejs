@@ -1,0 +1,285 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow">Progress</p>
+        <h1><%= analytics.range.rangeLabel %></h1>
+        <p class="muted small"><%= analytics.range.days %> day<%= analytics.range.days === 1 ? '' : 's' %> · <%= analytics.totals.trackedDays %> with tracked hours</p>
+      </div>
+      <%- include('partials/ring', {
+        percent: analytics.totals.avgDailyScore || 0,
+        value: analytics.totals.avgDailyScore === null ? '—' : analytics.totals.avgDailyScore,
+        label: 'avg score',
+        size: 100,
+        stroke: 9
+      }) %>
+    </div>
+    <div class="chips">
+      <% presets.forEach(function (item) { %>
+        <a class="chip <%= preset === item.value ? 'is-active' : '' %>" href="/progress?range=<%= item.value %>"><%= item.label %></a>
+      <% }); %>
+    </div>
+    <form method="get" action="/progress" class="field-row">
+      <input type="hidden" name="range" value="custom" />
+      <div class="field">
+        <label for="from">From</label>
+        <input type="date" id="from" name="from" value="<%= analytics.range.preset === 'custom' ? analytics.range.fromKey : analytics.range.fromKey %>" />
+      </div>
+      <div class="field">
+        <label for="to">To</label>
+        <input type="date" id="to" name="to" value="<%= analytics.range.toKey %>" />
+      </div>
+      <button class="btn is-sm" type="submit" style="grid-column: span 2">Apply range</button>
+    </form>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Where the time went</div>
+      <span class="card-sub"><%= analytics.totals.totalRecordedHours %> h recorded</span>
+    </div>
+    <% if (!analytics.hasTimeData) { %>
+      <div class="empty"><i data-lucide="clock"></i><span>No hours tracked in this range. Missing time is never guessed.</span></div>
+    <% } else { %>
+      <div class="chart-wrap"><canvas id="chart-doughnut" aria-label="Time category split" role="img"></canvas></div>
+      <div class="grid grid-2">
+        <div class="metric">
+          <span class="metric-label">Avg productive</span>
+          <span class="metric-value"><%= analytics.totals.avgProductiveHours === null ? '—' : analytics.totals.avgProductiveHours %><small>h/day</small></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Avg sleep</span>
+          <span class="metric-value"><%= analytics.totals.avgSleepHours === null ? '—' : analytics.totals.avgSleepHours %><small>h/night</small></span>
+        </div>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Daily completion score</div>
+      <span class="card-sub">0–100 from logged records</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-score" aria-label="Daily completion score" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Productivity by hour</div>
+      <span class="card-sub">All days combined</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-hourly" aria-label="Productivity by hour of day" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Weekly trend</div>
+      <span class="card-sub">Productive hours</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-weekly" aria-label="Weekly productive hours" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Water</div>
+      <span class="card-sub">Liters per day</span>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-water" aria-label="Water intake" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Protein</div>
+      <span class="card-sub">Target <%= analytics.targets.proteinG %> g</span>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-protein" aria-label="Protein intake" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Sleep</div>
+      <span class="card-sub">Hours, target <%= (analytics.targets.sleepMinutes / 60).toFixed(1) %></span>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-sleep" aria-label="Sleep duration" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Body weight</div>
+      <span class="card-sub">Kg</span>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-weight" aria-label="Body weight" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Gym & habits</div>
+      <span class="card-sub">Per day</span>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-gym" aria-label="Workouts and habit completion" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Productivity heatmap</div>
+      <span class="card-sub">Green = productive minutes</span>
+    </div>
+    <%
+      const heatDays = [...new Set(analytics.heatmap.map(function (cell) { return cell.dateKey; }))].slice(-14);
+      const heatIndex = {};
+      analytics.heatmap.forEach(function (cell) { heatIndex[cell.dateKey + ':' + cell.hour] = cell; });
+    %>
+    <% if (!heatDays.length) { %>
+      <div class="empty"><i data-lucide="grid-3x3"></i><span>No hourly data in this range yet.</span></div>
+    <% } else { %>
+      <div class="heatmap">
+        <% heatDays.forEach(function (day) { %>
+          <div class="heatmap-row">
+            <span class="heatmap-label"><%= formatDateShort(day) %></span>
+            <% for (let hour = 0; hour < 24; hour += 1) { %>
+              <%
+                const cell = heatIndex[day + ':' + hour];
+                const intensity = cell ? Math.max(0.14, Math.min(1, cell.productive / 60)) : 0;
+                const style = cell && cell.productive > 0
+                  ? 'background: rgba(50,182,122,' + intensity + ')'
+                  : (cell ? 'background: var(--surface-3)' : '');
+              %>
+              <span class="heatmap-cell" style="<%= style %>" title="<%= day %> · <%= hour %>:00"></span>
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <% if (liveWeek) { %>
+    <section class="card tight">
+      <div class="card-head">
+        <div class="card-title">Week <%= liveWeek.weekNumber %> in progress</div>
+        <span class="card-sub"><%= liveWeek.daysElapsed %>/<%= liveWeek.daysTotal %> days</span>
+      </div>
+      <div class="grid grid-2">
+        <div class="metric">
+          <span class="metric-label">Avg score</span>
+          <span class="metric-value"><%= liveWeek.stats.avgDailyScore === null ? '—' : liveWeek.stats.avgDailyScore %></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Workouts</span>
+          <span class="metric-value"><%= liveWeek.stats.workouts %><small>/<%= liveWeek.stats.targets.workoutsPerWeek %></small></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Avg water</span>
+          <span class="metric-value"><%= (liveWeek.stats.avgWaterMl / 1000).toFixed(1) %><small>L</small></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Habits</span>
+          <span class="metric-value"><%= liveWeek.stats.habitConsistencyPercent %><small>%</small></span>
+        </div>
+      </div>
+    </section>
+  <% } %>
+
+  <section class="card tight">
+    <div class="between">
+      <div>
+        <div class="card-title">Weekly reports</div>
+        <div class="card-sub">Generated from real records, never pre-filled</div>
+      </div>
+      <button class="btn is-sm" type="button" id="sync-reports"><i data-lucide="refresh-cw"></i>Refresh</button>
+    </div>
+    <% if (!reports.length) { %>
+      <div class="empty"><i data-lucide="file-text"></i><span>Your first report appears after week 1 ends.</span></div>
+    <% } %>
+    <div class="stack-sm">
+      <% reports.forEach(function (report) { %>
+        <div class="week-card <%= report.weekNumber === (liveWeek && liveWeek.weekNumber) ? 'is-current' : '' %>">
+          <div class="between">
+            <strong class="small">WEEK <%= report.weekNumber %> · <%= formatDateShort(report.startDate) %> – <%= formatDateShort(report.endDate) %></strong>
+            <span class="tag accent"><%= report.achievementPercent %>/100</span>
+          </div>
+          <div class="grid grid-2">
+            <span class="small muted">Productive <strong class="strong" style="color:var(--text)"><%= report.stats.productiveHours %> h</strong></span>
+            <span class="small muted">Sleep <strong class="strong" style="color:var(--text)"><%= report.stats.avgSleepHours === null ? '—' : report.stats.avgSleepHours %> h</strong></span>
+            <span class="small muted">Water <strong class="strong" style="color:var(--text)"><%= (report.stats.avgWaterMl / 1000).toFixed(1) %> L</strong></span>
+            <span class="small muted">Protein <strong class="strong" style="color:var(--text)"><%= report.stats.avgProteinG %> g</strong></span>
+            <span class="small muted">Workouts <strong class="strong" style="color:var(--text)"><%= report.stats.workouts %></strong></span>
+            <span class="small muted">Habits <strong class="strong" style="color:var(--text)"><%= report.stats.habitsDone %></strong></span>
+          </div>
+          <div class="between tiny muted">
+            <span>Best: <%= report.bestDay ? report.bestDay.weekday + ' (' + report.bestDay.score + ')' : '—' %></span>
+            <span>Weakest: <%= report.weakestDay ? report.weakestDay.weekday + ' (' + report.weakestDay.score + ')' : '—' %></span>
+          </div>
+          <% if (report.improvementPct !== null && report.improvementPct !== undefined) { %>
+            <span class="tag <%= report.improvementPct >= 0 ? 'success' : 'warning' %>">
+              <%= report.improvementPct >= 0 ? '+' : '' %><%= report.improvementPct %> vs previous week
+            </span>
+          <% } %>
+          <% (report.insights || []).forEach(function (insight) { %>
+            <span class="small muted">· <%= insight %></span>
+          <% }); %>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Achievements</div>
+      <span class="card-sub"><%= earnedCount %>/<%= achievements.length %> earned</span>
+    </div>
+    <div class="list">
+      <% achievements.forEach(function (achievement) { %>
+        <div class="achievement <%= achievement.earned ? 'is-earned' : '' %>">
+          <i data-lucide="<%= achievement.earned ? achievement.icon : 'lock' %>"></i>
+          <span class="stack-sm">
+            <span class="achievement-title"><%= achievement.title %></span>
+            <span class="achievement-sub">
+              <%= achievement.description %>
+              <% if (achievement.earned) { %> · <%= formatDateShort(achievement.earnedAt.toISOString().slice(0, 10)) %><% } %>
+            </span>
+          </span>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <% if (finalReport && finalReport.available) { %>
+    <section class="card tight">
+      <div class="card-head">
+        <div class="card-title">90-day transformation report</div>
+        <span class="card-sub">Week 1 vs Week 13</span>
+      </div>
+      <div class="grid grid-2">
+        <div class="metric">
+          <span class="metric-label">Score change</span>
+          <span class="metric-value"><%= finalReport.comparison.achievementChange > 0 ? '+' : '' %><%= finalReport.comparison.achievementChange %></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Productive hours</span>
+          <span class="metric-value"><%= finalReport.comparison.productiveHoursChange > 0 ? '+' : '' %><%= finalReport.comparison.productiveHoursChange %></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Sleep</span>
+          <span class="metric-value"><%= finalReport.comparison.sleepChangeHours > 0 ? '+' : '' %><%= finalReport.comparison.sleepChangeHours %><small>h</small></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Weight</span>
+          <span class="metric-value"><%= finalReport.weights.changeKg === null ? '—' : (finalReport.weights.changeKg > 0 ? '+' : '') + finalReport.weights.changeKg %><small>kg</small></span>
+        </div>
+      </div>
+      <div class="list">
+        <div class="list-item"><span class="list-item-main"><span class="list-item-title">Workouts completed</span><span class="list-item-meta">Across the full challenge</span></span><span class="tag success"><%= finalReport.workouts.total %></span></div>
+        <div class="list-item"><span class="list-item-main"><span class="list-item-title">Habit consistency</span><span class="list-item-meta"><%= finalReport.habits.completed %> completions</span></span><span class="tag accent"><%= finalReport.habits.consistencyPercent %>%</span></div>
+        <div class="list-item"><span class="list-item-main"><span class="list-item-title">Total volume lifted</span><span class="list-item-meta">All recorded sets</span></span><span class="tag"><%= finalReport.workouts.volumeKg.toLocaleString('en-IN') %> kg</span></div>
+      </div>
+    </section>
+  <% } %>
+</main>
+
+<script type="application/json" id="page-data"><%- safeJson(analytics) %></script>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'progress' }) %>

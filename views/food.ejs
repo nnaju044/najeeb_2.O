@@ -1,0 +1,200 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <%- include('partials/datenav', { basePath: '/food', prevDate: prevDate, nextDate: nextDate, label: dateLabel, sub: weekday, isToday: isToday }) %>
+
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow">Nutrition · estimates</p>
+        <div class="day-number"><%= Math.round(totals.totals.calories) %><span> / <%= totals.calorieTarget %> kcal</span></div>
+        <p class="muted small"><%= totals.caloriesRemaining %> kcal remaining · <%= totals.proteinRemaining %> g protein remaining</p>
+      </div>
+      <%- include('partials/ring', { percent: totals.proteinPercent, value: Math.round(totals.totals.protein) + 'g', label: 'protein', size: 100, stroke: 9, color: 'var(--success)' }) %>
+    </div>
+    <div class="grid grid-2">
+      <div class="stack-sm">
+        <div class="progress-row">
+          <div class="progress-meta"><span>Protein</span><span><%= totals.proteinPercent %>%</span></div>
+          <div class="bar-track"><div class="bar-fill success" style="width:<%= Math.min(100, totals.proteinPercent) %>%"></div></div>
+        </div>
+        <div class="progress-row">
+          <div class="progress-meta"><span>Calories</span><span><%= totals.caloriePercent %>%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:<%= Math.min(100, totals.caloriePercent) %>%"></div></div>
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="metric">
+          <span class="metric-label">Carbs</span>
+          <span class="metric-value"><%= Math.round(totals.totals.carbs) %><small>g</small></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Fat</span>
+          <span class="metric-value"><%= Math.round(totals.totals.fat) %><small>g</small></span>
+        </div>
+      </div>
+    </div>
+    <p class="note">Values are approximations from standard references; cooking oil, portion size and preparation change them. Adjust anything with a custom food.</p>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Quick add</div>
+      <span class="card-sub">Frequently eaten</span>
+    </div>
+    <% if (recentFoods.length) { %>
+      <div class="chips">
+        <% recentFoods.forEach(function (food) { %>
+          <button
+            class="chip"
+            type="button"
+            data-quick-food
+            data-food='<%- safeJson({ foodId: food._id, name: food.name, servingLabel: food.servingLabel, calories: food.calories, protein: food.protein, carbs: food.carbs, fat: food.fat }) %>'
+          ><%= food.name %> · <%= food.protein %>g P</button>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <p class="muted small">Your most-logged foods appear here after a few meals.</p>
+    <% } %>
+    <% if (favorites.length) { %>
+      <div class="divider"></div>
+      <div class="group-label"><span>Favourite meals</span><span>Tap to log today</span></div>
+      <div class="chips">
+        <% favorites.forEach(function (favorite) { %>
+          <button class="chip" type="button" data-log-favorite="<%= favorite._id %>">
+            <i data-lucide="star"></i><%= favorite.name %>
+          </button>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <% mealsByType.forEach(function (group) { %>
+    <section class="card tight">
+      <div class="card-head">
+        <div>
+          <div class="card-title"><%= group.label %></div>
+          <div class="card-sub">
+            <%= Math.round(group.meals.reduce(function (sum, meal) { return sum + meal.totals.calories; }, 0)) %> kcal
+          </div>
+        </div>
+        <button class="btn is-sm" type="button" data-add-meal="<%= group.type %>"><i data-lucide="plus"></i>Add</button>
+      </div>
+      <% if (!group.meals.length) { %>
+        <p class="muted small">Nothing logged for <%= group.label.toLowerCase() %>.</p>
+      <% } else { %>
+        <div class="list">
+          <% group.meals.forEach(function (meal) { %>
+            <div class="list-item">
+              <span class="list-item-main">
+                <span class="list-item-title"><%= meal.items.map(function (item) { return item.name; }).join(', ') %></span>
+                <span class="list-item-meta"><%= Math.round(meal.totals.calories) %> kcal · <%= meal.totals.protein %> g protein · <%= meal.totals.carbs %> g carbs · <%= meal.totals.fat %> g fat</span>
+              </span>
+              <span class="list-item-actions">
+                <button class="icon-btn" type="button" data-save-favorite="<%= meal._id %>" aria-label="Save as favourite"><i data-lucide="star"></i></button>
+                <button class="icon-btn" type="button" data-delete-meal="<%= meal._id %>" aria-label="Delete meal"><i data-lucide="trash-2"></i></button>
+              </span>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+  <% }); %>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Last 7 days</div>
+      <span class="card-sub">Protein vs calories</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-nutrition" aria-label="Protein and calorie intake for the last seven days" role="img"></canvas></div>
+  </section>
+</main>
+
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+
+<div class="sheet" id="meal-sheet" role="dialog" aria-modal="true" aria-labelledby="meal-sheet-title">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-head">
+    <div>
+      <div class="card-title" id="meal-sheet-title">Add meal</div>
+      <div class="card-sub" id="meal-sheet-sub"><%= dateLabel %></div>
+    </div>
+    <button class="icon-btn" type="button" data-close-sheet aria-label="Close"><i data-lucide="x"></i></button>
+  </div>
+  <div class="sheet-body">
+    <div class="chips" id="meal-type-chips">
+      <% mealTypes.forEach(function (type) { %>
+        <button class="chip" type="button" data-meal-type="<%= type %>"><%= mealLabels[type] %></button>
+      <% }); %>
+    </div>
+
+    <div class="field">
+      <label for="food-search">Search foods</label>
+      <input type="text" id="food-search" placeholder="Egg, dosa, chicken, oats…" autocomplete="off" />
+    </div>
+    <div class="list" id="food-results"></div>
+
+    <div class="stack-sm" id="favourites-block">
+      <div class="group-label"><span>Favourite meals</span></div>
+      <div class="chips" id="favourite-chips">
+        <% favorites.forEach(function (favorite) { %>
+          <button class="chip" type="button" data-sheet-favorite="<%= favorite._id %>"><%= favorite.name %></button>
+        <% }); %>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="group-label"><span>This meal</span><span id="meal-summary">0 kcal</span></div>
+    <div class="list" id="meal-items">
+      <p class="muted small" id="meal-empty">Tap a food above to add it.</p>
+    </div>
+
+    <details>
+      <summary class="group-label">Add a custom food</summary>
+      <div class="stack-sm" style="margin-top:10px">
+        <input type="text" id="custom-name" placeholder="Food name" maxlength="120" />
+        <div class="field-row">
+          <input type="number" id="custom-calories" placeholder="Calories" min="0" max="5000" />
+          <input type="number" id="custom-protein" placeholder="Protein (g)" min="0" max="300" />
+        </div>
+        <div class="field-row">
+          <input type="number" id="custom-carbs" placeholder="Carbs (g)" min="0" max="600" />
+          <input type="number" id="custom-fat" placeholder="Fat (g)" min="0" max="300" />
+        </div>
+        <input type="text" id="custom-serving" placeholder="Serving label (e.g. 1 cup)" maxlength="60" />
+        <button class="btn is-sm" type="button" id="custom-food-save">Add custom food to library</button>
+      </div>
+    </details>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn is-ghost" type="button" data-close-sheet>Cancel</button>
+    <button class="btn is-primary" type="button" id="save-meal">Save meal</button>
+  </div>
+</div>
+
+<div class="sheet" id="favorite-sheet" role="dialog" aria-modal="true" aria-labelledby="favorite-title">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-head">
+    <div>
+      <div class="card-title" id="favorite-title">Save as favourite</div>
+      <div class="card-sub">Reusable meal combination</div>
+    </div>
+    <button class="icon-btn" type="button" data-close-sheet aria-label="Close"><i data-lucide="x"></i></button>
+  </div>
+  <div class="sheet-body">
+    <div class="field">
+      <label for="favorite-name">Favourite name</label>
+      <input type="text" id="favorite-name" maxlength="120" placeholder="Sunday breakfast" />
+    </div>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn is-ghost" type="button" data-close-sheet>Cancel</button>
+    <button class="btn is-primary" type="button" id="save-favorite">Save favourite</button>
+  </div>
+</div>
+
+<script type="application/json" id="page-data"><%- safeJson({ dateKey: dateKey, week: week, favorites: favorites, recentFoods: recentFoods }) %></script>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'food' }) %>

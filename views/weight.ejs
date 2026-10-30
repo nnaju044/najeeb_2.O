@@ -1,0 +1,116 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow">Body composition</p>
+        <% if (summary.latest) { %>
+          <div class="day-number"><%= summary.latest.weightKg %><span> kg</span></div>
+          <p class="muted small">
+            <%= formatDateShort(summary.latest.dateKey) %>
+            <% if (summary.changeKg !== null) { %>
+              · <%= summary.changeKg > 0 ? '+' : '' %><%= summary.changeKg %> kg since last entry
+            <% } %>
+          </p>
+        <% } else { %>
+          <h1>No weight logged yet.</h1>
+          <p class="muted small">Record occasionally — daily weighing is not required.</p>
+        <% } %>
+      </div>
+      <%- include('partials/ring', {
+        percent: summary.bmi ? Math.min(100, (summary.bmi / 30) * 100) : 0,
+        value: summary.bmi || '—',
+        label: 'bmi',
+        size: 100,
+        stroke: 9,
+        color: 'var(--accent)'
+      }) %>
+    </div>
+    <div class="grid grid-3">
+      <div class="metric">
+        <span class="metric-label">7-day average</span>
+        <span class="metric-value"><%= summary.weeklyAverage || '—' %><small>kg</small></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Previous</span>
+        <span class="metric-value"><%= summary.previous ? summary.previous.weightKg : '—' %><small>kg</small></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Entries</span>
+        <span class="metric-value"><%= summary.entries.length %></span>
+      </div>
+    </div>
+    <p class="note">The goal is body composition and strength, not simply a lower number. Trends over weeks matter more than single readings.</p>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Record weight</div>
+      <span class="card-sub">Updates today's entry</span>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="weight-date">Date</label>
+        <input type="date" id="weight-date" value="<%= todayKey %>" max="<%= todayKey %>" />
+      </div>
+      <div class="field">
+        <label for="weight-value">Weight (kg)</label>
+        <input type="number" id="weight-value" min="20" max="400" step="0.1" inputmode="decimal" placeholder="58.0" />
+      </div>
+    </div>
+    <details>
+      <summary class="group-label">Optional measurements</summary>
+      <div class="field-row" style="margin-top:10px">
+        <div class="field">
+          <label for="height-value">Height (cm)</label>
+          <input type="number" id="height-value" min="80" max="260" step="0.5" inputmode="decimal" value="<%= summary.heightCm || '' %>" />
+        </div>
+        <div class="field">
+          <label for="waist-value">Waist (cm)</label>
+          <input type="number" id="waist-value" min="30" max="250" step="0.5" inputmode="decimal" />
+        </div>
+      </div>
+    </details>
+    <button class="btn is-primary is-block" type="button" id="save-weight"><i data-lucide="plus"></i>Save weight</button>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Trend</div>
+      <span class="card-sub">All records</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-weight" aria-label="Body weight trend" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">History</div>
+      <span class="card-sub">Recent entries</span>
+    </div>
+    <div class="list" id="weight-list">
+      <% if (!summary.entries.length) { %>
+        <div class="empty"><i data-lucide="scale"></i><span>No weight entries yet.</span></div>
+      <% } %>
+      <% summary.entries.slice().reverse().slice(0, 20).forEach(function (entry) { %>
+        <div class="list-item">
+          <span class="list-item-main">
+            <span class="list-item-title"><%= entry.weightKg %> kg</span>
+            <span class="list-item-meta">
+              <%= formatDateShort(entry.dateKey) %>
+              <% if (entry.waistCm) { %> · waist <%= entry.waistCm %> cm<% } %>
+              <% if (entry.bodyFatPct) { %> · <%= entry.bodyFatPct %>% fat<% } %>
+            </span>
+          </span>
+          <button class="icon-btn" type="button" data-delete-weight="<%= entry._id %>" aria-label="Delete weight entry"><i data-lucide="trash-2"></i></button>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+</main>
+
+<script type="application/json" id="page-data"><%- safeJson({ entries: summary.entries, todayKey: todayKey }) %></script>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'weight' }) %>

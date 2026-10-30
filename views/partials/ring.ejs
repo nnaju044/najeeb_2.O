@@ -1,0 +1,30 @@
+<%
+  const ringSize = typeof size !== 'undefined' ? size : 104;
+  const ringStroke = typeof stroke !== 'undefined' ? stroke : 9;
+  const ringColor = typeof color !== 'undefined' ? color : 'var(--accent)';
+  const radius = (ringSize - ringStroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.max(0, Math.min(100, Number(percent) || 0));
+  const offset = circumference * (1 - clamped / 100);
+%>
+<div class="ring" style="width:<%= ringSize %>px;height:<%= ringSize %>px">
+  <svg viewBox="0 0 <%= ringSize %> <%= ringSize %>" width="<%= ringSize %>" height="<%= ringSize %>" aria-hidden="true">
+    <circle cx="<%= ringSize / 2 %>" cy="<%= ringSize / 2 %>" r="<%= radius %>" fill="none" stroke="var(--ring-track)" stroke-width="<%= ringStroke %>" />
+    <circle
+      cx="<%= ringSize / 2 %>"
+      cy="<%= ringSize / 2 %>"
+      r="<%= radius %>"
+      fill="none"
+      stroke="<%= ringColor %>"
+      stroke-width="<%= ringStroke %>"
+      stroke-linecap="round"
+      stroke-dasharray="<%= circumference.toFixed(2) %>"
+      stroke-dashoffset="<%= offset.toFixed(2) %>"
+      transform="rotate(-90 <%= ringSize / 2 %> <%= ringSize / 2 %>)"
+    />
+  </svg>
+  <div class="ring-label">
+    <strong><%= value %></strong>
+    <span><%= label %></span>
+  </div>
+</div>

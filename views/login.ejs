@@ -1,0 +1,36 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+
+<div class="auth-shell">
+  <div class="auth-hero">
+    <span class="brand-mark" style="width:44px;height:44px;border-radius:14px;font-size:1.2rem">J</span>
+    <h1>Jeebs 2.O</h1>
+    <p class="muted small">Build a better you. Make tracking effortless, make progress visible.</p>
+  </div>
+
+  <form class="auth-card" method="post" action="/login">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <input type="hidden" name="next" value="<%= next %>" />
+    <h2>Sign in</h2>
+    <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="<%= email %>" autocomplete="username" required />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="password-input-wrap">
+        <input type="password" id="password" name="password" autocomplete="current-password" minlength="8" required />
+        <button type="button" class="password-toggle" data-toggle-password="password" aria-label="Show password" title="Show password" tabindex="-1">
+          <i data-lucide="eye"></i>
+        </button>
+      </div>
+    </div>
+    <button class="btn is-primary is-block" type="submit">Sign in</button>
+    <div class="between tiny muted" style="margin-top:14px">
+      <span>Don't have an account?</span>
+      <a href="/register" style="color:var(--accent);font-weight:600">Create an account →</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/foot', { pageScript: null }) %>

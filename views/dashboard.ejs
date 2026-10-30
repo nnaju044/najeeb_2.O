@@ -1,0 +1,316 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+<% if (needsChallenge) { %>
+  <section class="card hero">
+    <div class="auth-hero">
+      <p class="eyebrow">Welcome</p>
+      <h1>Your 90 days start when you decide.</h1>
+      <p class="muted small">Pick a start date, then Jeebs 2.O maps every day of the challenge, tracks all 1,440 minutes, and turns your records into weekly reports.</p>
+    </div>
+    <a class="btn is-primary is-block" href="/challenge">Start the challenge <i data-lucide="arrow-right"></i></a>
+    <p class="note">Nothing is pre-filled. Every number you see later comes from what you log.</p>
+  </section>
+<% } else { %>
+
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow"><%= data.weekday %> · <%= formatDateLong(data.dateKey) %></p>
+        <div class="day-number"><%= data.dayIsToday ? 'Day ' + data.progress.dayNumber : 'Day ' + data.progress.dayNumber %><span> / <%= data.progress.duration %></span></div>
+        <p class="muted small">
+          <% if (data.progress.status === 'before') { %>
+            Challenge starts <%= formatDateShort(data.progress.startDate) %>
+          <% } else if (data.progress.status === 'completed') { %>
+            Challenge complete · <%= data.progress.daysCompleted %> days recorded
+          <% } else { %>
+            <%= data.progress.remainingDays %> days remaining · Week <%= data.progress.weekNumber %>
+          <% } %>
+        </p>
+      </div>
+      <%- include('partials/ring', { percent: data.metrics.score, value: data.metrics.score, label: 'score', size: 96, stroke: 8 }) %>
+    </div>
+    <div class="stack-sm">
+      <div class="bar-track"><div class="bar-fill" style="width:<%= data.progress.completionPercent %>%"></div></div>
+      <div class="between tiny muted">
+        <span><%= data.progress.completionPercent %>% of challenge elapsed</span>
+        <span>Week score: <%= data.week.stats.avgDailyScore === null ? '—' : data.week.stats.avgDailyScore %></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Quick log</div>
+      <span class="card-sub">One or two taps</span>
+    </div>
+    <div class="quick-grid">
+      <a class="quick-action" href="/food"><i data-lucide="utensils"></i>Add meal</a>
+      <a class="quick-action" href="/time"><i data-lucide="clock"></i>Log time</a>
+      <a class="quick-action" href="/sleep"><i data-lucide="moon"></i>Track sleep</a>
+      <a class="quick-action" href="/habits"><i data-lucide="circle-check"></i>Habits</a>
+      <a class="quick-action" href="/gym"><i data-lucide="dumbbell"></i>Workout</a>
+      <a class="quick-action" href="/weight"><i data-lucide="scale"></i>Weight</a>
+      <% if (currentUser && currentUser.prayerTrackerEnabled) { %>
+        <a class="quick-action" href="/prayer"><i data-lucide="sparkles"></i>Prayers</a>
+      <% } %>
+    </div>
+    <div class="divider"></div>
+    <div class="group-label"><span>Water</span><span id="dash-water-label"><%= (data.water.totalMl / 1000).toFixed(2) %> / <%= (data.water.targetMl / 1000).toFixed(1) %> L</span></div>
+    <div class="chips" id="dashboard-water" data-date="<%= data.dateKey %>">
+      <button class="chip water" type="button" data-water="250">250 ml</button>
+      <button class="chip water" type="button" data-water="500">500 ml</button>
+      <button class="chip water" type="button" data-water="1000">1 L</button>
+      <a class="chip" href="/water">Custom</a>
+    </div>
+  </section>
+
+  <% if (currentUser && currentUser.prayerTrackerEnabled && typeof prayerData !== 'undefined' && prayerData) { %>
+    <section class="card tight prayer-card" id="prayer-tracker-card" data-date="<%= data.dateKey %>">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Daily prayers</div>
+          <span class="card-sub" id="prayer-progress-summary"><%= prayerData.completedCount %> / <%= prayerData.totalCount %> completed · <%= prayerData.percent %>%</span>
+        </div>
+        <a class="card-sub" href="/prayer" style="color:var(--accent);font-weight:600">Open tracker →</a>
+      </div>
+      <div class="bar-track" style="margin-bottom:12px">
+        <div class="bar-fill" id="prayer-bar-fill" style="width:<%= prayerData.percent %>%;background:var(--accent)"></div>
+      </div>
+      <div class="prayer-chips-grid">
+        <% prayerData.prayers.forEach(function (prayer) { %>
+          <button
+            class="prayer-chip <%= prayer.completed ? 'is-completed' : '' %>"
+            type="button"
+            data-prayer="<%= prayer.name %>"
+            data-completed="<%= prayer.completed ? 'true' : 'false' %>"
+            aria-label="Toggle <%= prayer.name %>"
+          >
+            <span class="prayer-chip-indicator"><i data-lucide="<%= prayer.completed ? 'check' : prayer.icon %>"></i></span>
+            <span class="prayer-chip-name"><%= prayer.name %></span>
+            <span class="prayer-chip-period tiny muted"><%= prayer.period %></span>
+          </button>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Today at a glance</div>
+      <a class="card-sub" href="/time">Open 24h →</a>
+    </div>
+    <div class="grid grid-3">
+      <div class="metric">
+        <span class="metric-label">Productive</span>
+        <span class="metric-value" data-metric="productive"><%= data.metrics.time.productiveHours %><small>h</small></span>
+        <span class="metric-note"><%= data.time.productivePercent %>% of tracked</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Unproductive</span>
+        <span class="metric-value"><%= data.metrics.time.unproductiveHours %><small>h</small></span>
+        <span class="metric-note"><%= data.time.unproductivePercent %>% of tracked</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Sleep</span>
+        <span class="metric-value"><%= data.metrics.sleep.hours %><small>h</small></span>
+        <span class="metric-note"><%= data.metrics.sleep.minutes > 0 ? 'target ' + (data.metrics.sleep.targetMinutes / 60).toFixed(1) + 'h' : 'not logged' %></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Water</span>
+        <span class="metric-value" id="dash-water-value"><%= (data.water.totalMl / 1000).toFixed(2) %><small>L</small></span>
+        <span class="metric-note" id="dash-water-note"><%= data.water.percent %>% of target</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Protein</span>
+        <span class="metric-value"><%= Math.round(data.nutrition.totals.protein) %><small>g</small></span>
+        <span class="metric-note"><%= data.nutrition.proteinRemaining %> g left</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Calories</span>
+        <span class="metric-value"><%= Math.round(data.nutrition.totals.calories) %></span>
+        <span class="metric-note">target <%= data.nutrition.calorieTarget %></span>
+      </div>
+    </div>
+
+    <div class="stack-sm">
+      <div class="progress-row">
+        <div class="progress-meta"><span>Water</span><span><%= data.water.percent %>%</span></div>
+        <div class="bar-track"><div class="bar-fill" id="dash-water-bar" style="width:<%= Math.min(100, data.water.percent) %>%"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-meta"><span>Protein</span><span><%= data.nutrition.proteinPercent %>%</span></div>
+        <div class="bar-track"><div class="bar-fill success" style="width:<%= Math.min(100, data.nutrition.proteinPercent) %>%"></div></div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-meta"><span>Habits</span><span><%= data.habits.percent %>%</span></div>
+        <div class="bar-track"><div class="bar-fill warning" style="width:<%= Math.min(100, data.habits.percent) %>%"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div class="card-title">24-hour timeline</div>
+      <span class="card-sub"><%= (data.time.recordedMinutes / 60).toFixed(1) %> h accounted</span>
+    </div>
+    <div class="timeline-strip" aria-hidden="true">
+      <% data.time.hours.forEach(function (hour) { %>
+        <%
+          // Dominant bucket decides the colour; untracked hours stay empty.
+          const buckets = { productive: hour.productive, unproductive: hour.unproductive, rest: hour.rest, sleep: hour.sleep };
+          const dominant = Object.keys(buckets).reduce(function (best, key) { return buckets[key] > buckets[best] ? key : best; }, 'productive');
+          const empty = hour.total === 0;
+        %>
+        <span class="seg <%= empty ? '' : dominant %>" style="<%= empty ? 'background:var(--ring-track)' : '' %>"></span>
+      <% }); %>
+    </div>
+    <div class="timeline-ticks"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></div>
+    <div class="legend">
+      <span><i class="legend-dot seg productive"></i>Productive</span>
+      <span><i class="legend-dot seg unproductive"></i>Unproductive</span>
+      <span><i class="legend-dot seg rest"></i>Rest</span>
+      <span><i class="legend-dot seg sleep"></i>Sleep</span>
+    </div>
+    <div class="between tiny muted">
+      <span><%= data.time.recordedMinutes %> min recorded</span>
+      <span><%= data.time.unclassifiedMinutes %> min untracked (not counted as unproductive)</span>
+    </div>
+    <a class="btn is-sm" href="/time">Track hours <i data-lucide="arrow-right"></i></a>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div class="card-title">This week</div>
+      <a class="card-sub" href="/progress">Details →</a>
+    </div>
+    <div class="week-strip">
+      <% data.week.rows.forEach(function (row) { %>
+        <div class="week-day <%= row.dateKey === data.dateKey ? 'is-today' : '' %>">
+          <div class="week-bar"><span style="height:<%= Math.max(3, row.score) %>%"></span></div>
+          <span><%= weekdayShort(row.dateKey) %></span>
+        </div>
+      <% }); %>
+    </div>
+    <div class="between tiny muted">
+      <span><%= data.week.stats.trackedDays %> / <%= data.week.rows.length %> days with tracked hours</span>
+      <span>Workouts: <%= data.week.stats.workouts %></span>
+    </div>
+  </section>
+
+  <section class="message <%= data.message.tone === 'success' ? 'is-success' : data.message.tone === 'warning' ? 'is-warning' : '' %>">
+    <%= data.message.text %>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div class="card-title">Daily note</div>
+      <span class="card-sub" id="note-status"><%= data.dailyLog && data.dailyLog.notes ? 'Saved' : 'Optional' %></span>
+    </div>
+    <div class="field">
+      <label for="daily-note" class="sr-only">Note for <%= formatDateLong(data.dateKey) %></label>
+      <textarea id="daily-note" maxlength="2000" placeholder="What worked today? What needs to change tomorrow?"><%= data.dailyLog ? data.dailyLog.notes : '' %></textarea>
+    </div>
+    <button class="btn is-sm" type="button" id="save-note" data-date="<%= data.dateKey %>">Save note</button>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div class="card-title">Habits today</div>
+      <span class="card-sub" id="dash-habit-summary"><%= data.habits.done %>/<%= data.habits.total %> done</span>
+    </div>
+    <div class="list" id="dashboard-habits">
+      <% data.habits.habits.slice(0, 5).forEach(function (habit) { %>
+        <button
+          class="list-item"
+          type="button"
+          data-habit-toggle
+          data-habit-id="<%= habit._id %>"
+          data-habit-name="<%= habit.name %>"
+          data-date="<%= data.dateKey %>"
+          data-status="<%= habit.status || 'none' %>"
+          aria-pressed="<%= habit.status === 'done' %>"
+        >
+          <span class="list-item-main">
+            <span class="list-item-title"><%= habit.name %></span>
+            <span class="list-item-meta"><%= habit.status ? habit.status.toUpperCase() : 'Tap to complete' %></span>
+          </span>
+          <span class="tag <%= habit.status === 'done' ? 'success' : habit.status === 'skipped' ? 'warning' : '' %>">
+            <i data-lucide="<%= habit.status === 'done' ? 'check' : 'circle' %>"></i>
+          </span>
+        </button>
+      <% }); %>
+    </div>
+    <a class="btn is-sm" href="/habits">All habits <i data-lucide="arrow-right"></i></a>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div class="card-title">Today's log</div>
+      <a class="card-sub" href="/food">Add meal →</a>
+    </div>
+    <% if (!data.nutrition.meals.length && !data.workouts.today.length && !data.sleep.sessionCount) { %>
+      <div class="empty">
+        <i data-lucide="clipboard-list"></i>
+        <span>No meals, sleep or workouts logged yet today.</span>
+      </div>
+    <% } else { %>
+      <div class="list">
+        <% data.nutrition.meals.forEach(function (meal) { %>
+          <div class="list-item">
+            <span class="list-item-main">
+              <span class="list-item-title"><%= presets.MEAL_LABELS[meal.mealType] %></span>
+              <span class="list-item-meta"><%= meal.items.length %> item<%= meal.items.length === 1 ? '' : 's' %> · <%= Math.round(meal.totals.calories) %> kcal · <%= meal.totals.protein %> g protein</span>
+            </span>
+            <span class="tag accent"><%= Math.round(meal.totals.calories) %> kcal</span>
+          </div>
+        <% }); %>
+        <% data.workouts.today.forEach(function (workout) { %>
+          <div class="list-item">
+            <span class="list-item-main">
+              <span class="list-item-title"><%= workout.name %></span>
+              <span class="list-item-meta"><%= workout.durationMinutes %> min · <%= workout.exercises.length %> exercises</span>
+            </span>
+            <span class="tag success"><i data-lucide="dumbbell"></i>Done</span>
+          </div>
+        <% }); %>
+        <% if (data.sleep.sessionCount) { %>
+          <div class="list-item">
+            <span class="list-item-main">
+              <span class="list-item-title">Sleep</span>
+              <span class="list-item-meta"><%= (data.sleep.totalMinutes / 60).toFixed(1) %> h · <%= data.sleep.sessionCount %> session<%= data.sleep.sessionCount === 1 ? '' : 's' %></span>
+            </span>
+            <span class="tag sleep"><i data-lucide="moon"></i><%= data.sleep.qualityLabel || '—' %></span>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+  </section>
+
+  <% if (achievements && achievements.length) { %>
+    <section class="card tight">
+      <div class="between">
+        <div class="card-title">Recent badges</div>
+        <a class="card-sub" href="/progress">All →</a>
+      </div>
+      <div class="list">
+        <% achievements.forEach(function (achievement) { %>
+          <div class="achievement is-earned">
+            <i data-lucide="<%= achievement.icon %>"></i>
+            <span class="stack-sm">
+              <span class="achievement-title"><%= achievement.title %></span>
+              <span class="achievement-sub"><%= achievement.description %></span>
+            </span>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+  <noscript><p class="note">Enable JavaScript to use one-tap logging on this dashboard.</p></noscript>
+<% } %>
+</main>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'dashboard' }) %>

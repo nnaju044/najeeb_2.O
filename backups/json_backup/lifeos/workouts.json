@@ -1,0 +1,38 @@
+[
+  {
+    "_id": "6ae4af5c95c9cd3fdf492f81",
+    "userId": "6ae4af014896e7716b9c20f4",
+    "dateKey": "2026-10-30",
+    "type": "full_body",
+    "name": "Full body A",
+    "durationMinutes": 55,
+    "exercises": [
+      {
+        "exerciseId": null,
+        "name": "Chest press",
+        "muscleGroup": "Chest",
+        "sets": [
+          {
+            "reps": 10,
+            "weightKg": 20,
+            "durationSeconds": 0,
+            "completed": true
+          },
+          {
+            "reps": 8,
+            "weightKg": 25,
+            "durationSeconds": 0,
+            "completed": true
+          }
+        ],
+        "notes": ""
+      }
+    ],
+    "completed": true,
+    "effort": 6,
+    "notes": "",
+    "createdAt": "2026-10-30T14:53:16.161Z",
+    "updatedAt": "2026-10-30T14:53:16.161Z",
+    "__v": 0
+  }
+]

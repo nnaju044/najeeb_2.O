@@ -1,0 +1,17 @@
+<nav class="bottomnav" aria-label="Main navigation">
+  <%
+    const navItems = [
+      { href: '/', icon: 'house', label: 'Home', key: 'home' },
+      { href: '/time', icon: 'clock', label: 'Time', key: 'time' },
+      { href: '/health', icon: 'heart-pulse', label: 'Health', key: 'health' },
+      { href: '/gym', icon: 'dumbbell', label: 'Gym', key: 'gym' },
+      { href: '/progress', icon: 'chart-line', label: 'Progress', key: 'progress' }
+    ];
+  %>
+  <% navItems.forEach(function (item) { %>
+    <a class="nav-item <%= active === item.key ? 'is-active' : '' %>" href="<%= item.href %>" <%= active === item.key ? 'aria-current="page"' : '' %>>
+      <i data-lucide="<%= item.icon %>"></i>
+      <span><%= item.label %></span>
+    </a>
+  <% }); %>
+</nav>

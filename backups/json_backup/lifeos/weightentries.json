@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "6ae4af5c95c9cd3fdf492f85",
+    "userId": "6ae4af014896e7716b9c20f4",
+    "dateKey": "2026-10-30",
+    "weightKg": 58.4,
+    "heightCm": 172,
+    "bodyFatPct": null,
+    "waistCm": null,
+    "notes": "",
+    "createdAt": "2026-10-30T14:53:16.170Z",
+    "updatedAt": "2026-10-30T14:53:16.170Z",
+    "__v": 0
+  }
+]

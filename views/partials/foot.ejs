@@ -1,0 +1,10 @@
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/vendor/lucide/lucide.js" defer></script>
+<script src="/vendor/chart.js/chart.umd.js" defer></script>
+<script src="/js/app.js" defer></script>
+<% if (typeof pageScript !== 'undefined' && pageScript) { %>
+  <script src="/js/pages/<%= pageScript %>.js" defer></script>
+<% } %>
+</body>
+</html>

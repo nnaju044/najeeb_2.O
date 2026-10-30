@@ -1,0 +1,53 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+
+<div class="auth-shell">
+  <div class="auth-hero">
+    <span class="brand-mark" style="width:44px;height:44px;border-radius:14px;font-size:1.2rem">J</span>
+    <h1>Create your Jeebs 2.O</h1>
+    <p class="muted small">Build a better you. Create your private account and start your 90-day transformation.</p>
+  </div>
+
+  <form class="auth-card" method="post" action="/register">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+    <% if (error) { %><div class="form-error"><%= error %></div><% } %>
+    <div class="field">
+      <label for="name">Name (optional)</label>
+      <input type="text" id="name" name="name" value="<%= name %>" maxlength="80" autocomplete="name" />
+    </div>
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" value="<%= email %>" autocomplete="username" required />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="password-input-wrap">
+        <input type="password" id="password" name="password" autocomplete="new-password" minlength="8" required />
+        <button type="button" class="password-toggle" data-toggle-password="password" aria-label="Show password" title="Show password" tabindex="-1">
+          <i data-lucide="eye"></i>
+        </button>
+      </div>
+      <span class="tiny muted">At least 8 characters. Stored as a bcrypt hash, never in plain text.</span>
+    </div>
+    <div class="field">
+      <label for="confirmPassword">Confirm password</label>
+      <div class="password-input-wrap">
+        <input type="password" id="confirmPassword" name="confirmPassword" autocomplete="new-password" minlength="8" required />
+        <button type="button" class="password-toggle" data-toggle-password="confirmPassword" aria-label="Show password" title="Show password" tabindex="-1">
+          <i data-lucide="eye"></i>
+        </button>
+      </div>
+    </div>
+    <div class="field">
+      <label for="startDate">Challenge start date</label>
+      <input type="date" id="startDate" name="startDate" value="<%= startDate || today %>" max="<%= today %>" />
+      <span class="tiny muted">Day 1 of your 90-day transformation (today or backdated).</span>
+    </div>
+    <button class="btn is-primary is-block" type="submit">Create account</button>
+    <div class="between tiny muted" style="margin-top:14px">
+      <span>Already have an account?</span>
+      <a href="/login" style="color:var(--accent);font-weight:600">Sign in →</a>
+    </div>
+  </form>
+</div>
+
+<%- include('partials/foot', { pageScript: null }) %>

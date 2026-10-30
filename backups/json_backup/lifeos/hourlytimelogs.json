@@ -1,0 +1,44 @@
+[
+  {
+    "_id": "6ae4af5c2375ec8706abc631",
+    "hour": 10,
+    "userId": "6ae4af014896e7716b9c20f4",
+    "dateKey": "2026-10-30",
+    "__v": 0,
+    "createdAt": "2026-10-30T14:53:16.104Z",
+    "productive": 35,
+    "rest": 10,
+    "sleep": 0,
+    "source": "manual",
+    "unproductive": 15,
+    "updatedAt": "2026-10-30T14:53:16.104Z"
+  },
+  {
+    "_id": "6ae4af5c2375ec8706abc638",
+    "dateKey": "2026-10-30",
+    "hour": 2,
+    "userId": "6ae4af014896e7716b9c20f4",
+    "__v": 0,
+    "createdAt": "2026-10-30T14:53:16.123Z",
+    "productive": 0,
+    "rest": 0,
+    "sleep": 60,
+    "source": "sleep",
+    "unproductive": 0,
+    "updatedAt": "2026-10-30T14:53:16.123Z"
+  },
+  {
+    "_id": "6ae4e15b19b2b4f0ae589275",
+    "hour": 14,
+    "userId": "6ae4af014896e7716b9c20f4",
+    "dateKey": "2026-10-30",
+    "__v": 0,
+    "createdAt": "2026-10-30T18:26:35.077Z",
+    "productive": 45,
+    "rest": 15,
+    "sleep": 0,
+    "source": "manual",
+    "unproductive": 0,
+    "updatedAt": "2026-10-30T18:26:35.077Z"
+  }
+]

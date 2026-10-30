@@ -1,0 +1,12 @@
+<header class="topbar">
+  <a class="brand" href="/"><span class="brand-mark">J</span><span>Jeebs 2.O</span></a>
+  <div class="topbar-actions">
+    <% if (typeof progress !== 'undefined' && progress && progress.dayNumber) { %>
+      <span class="pill">Day <%= progress.dayNumber %>/<%= progress.duration %></span>
+    <% } %>
+    <button class="icon-btn" type="button" data-theme-toggle aria-label="Switch light or dark theme">
+      <i data-lucide="sun-moon"></i>
+    </button>
+    <a class="icon-btn" href="/settings" aria-label="Settings"><i data-lucide="settings"></i></a>
+  </div>
+</header>

@@ -1,0 +1,198 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <% if (saved) { %>
+    <div class="form-error" style="background:var(--success-soft);border-color:var(--success);color:var(--success)">Saved.</div>
+  <% } %>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Account</div>
+      <span class="card-sub"><%= currentUser.email %></span>
+    </div>
+    <div class="field">
+      <label for="profile-name">Name</label>
+      <input type="text" id="profile-name" value="<%= currentUser.name || '' %>" maxlength="80" placeholder="Your name" />
+    </div>
+    <button class="btn is-sm" type="button" id="save-profile">Save name</button>
+    <div class="divider"></div>
+    <div class="card-head" style="margin-bottom:8px">
+      <div class="card-title" style="font-size:0.95rem">Security</div>
+      <span class="card-sub">Change password</span>
+    </div>
+    <div class="stack" style="gap:8px">
+      <div class="field">
+        <label for="current-password">Current password</label>
+        <div class="password-input-wrap">
+          <input type="password" id="current-password" autocomplete="current-password" placeholder="Current password" />
+          <button type="button" class="password-toggle" data-toggle-password="current-password" aria-label="Show password" title="Show password" tabindex="-1">
+            <i data-lucide="eye"></i>
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="new-password">New password</label>
+        <div class="password-input-wrap">
+          <input type="password" id="new-password" autocomplete="new-password" placeholder="At least 8 characters" minlength="8" />
+          <button type="button" class="password-toggle" data-toggle-password="new-password" aria-label="Show password" title="Show password" tabindex="-1">
+            <i data-lucide="eye"></i>
+          </button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="confirm-new-password">Confirm new password</label>
+        <div class="password-input-wrap">
+          <input type="password" id="confirm-new-password" autocomplete="new-password" placeholder="Re-enter new password" minlength="8" />
+          <button type="button" class="password-toggle" data-toggle-password="confirm-new-password" aria-label="Show password" title="Show password" tabindex="-1">
+            <i data-lucide="eye"></i>
+          </button>
+        </div>
+      </div>
+      <button class="btn is-sm is-block" type="button" id="save-password">Update password</button>
+    </div>
+    <div class="divider"></div>
+    <div class="between">
+      <span class="small muted">Signed in on this device</span>
+      <form method="post" action="/logout">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+        <button class="btn is-sm is-danger" type="submit">Sign out</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Appearance</div>
+      <span class="card-sub">Dark is the default</span>
+    </div>
+    <div class="chips" id="theme-chips">
+      <button class="chip <%= (currentUser.theme || 'dark') === 'dark' ? 'is-active' : '' %>" type="button" data-theme-choice="dark"><i data-lucide="moon"></i>Dark</button>
+      <button class="chip <%= currentUser.theme === 'light' ? 'is-active' : '' %>" type="button" data-theme-choice="light"><i data-lucide="sun"></i>Light</button>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Personal Features</div>
+      <span class="card-sub">Optional life trackers</span>
+    </div>
+    <div class="stack" style="gap:12px">
+      <div class="between" style="align-items:center;padding:4px 0">
+        <div style="flex:1;padding-right:16px">
+          <div style="font-weight:600;font-size:0.95rem">Prayer Tracker</div>
+          <span class="small muted">Track your five daily prayers.</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="feature-prayer-tracker" <%= currentUser.prayerTrackerEnabled ? 'checked' : '' %> />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <p class="note">Disabled by default. When disabled, all prayer interfaces are hidden. Your recorded history is always preserved.</p>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Daily targets</div>
+      <span class="card-sub">Used by scoring and reports</span>
+    </div>
+    <form method="post" action="/settings/targets" class="stack">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <div class="field-row">
+        <div class="field">
+          <label for="waterMl">Water (ml)</label>
+          <input type="number" id="waterMl" name="waterMl" value="<%= targets.waterMl %>" min="500" max="6000" step="50" />
+        </div>
+        <div class="field">
+          <label for="proteinG">Protein (g)</label>
+          <input type="number" id="proteinG" name="proteinG" value="<%= targets.proteinG %>" min="20" max="300" step="5" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="calories">Calories (kcal)</label>
+          <input type="number" id="calories" name="calories" value="<%= targets.calories %>" min="1000" max="6000" step="50" />
+        </div>
+        <div class="field">
+          <label for="sleepMinutes">Sleep (min)</label>
+          <input type="number" id="sleepMinutes" name="sleepMinutes" value="<%= targets.sleepMinutes %>" min="240" max="780" step="15" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="workoutsPerWeek">Workouts per week</label>
+        <input type="number" id="workoutsPerWeek" name="workoutsPerWeek" value="<%= targets.workoutsPerWeek %>" min="0" max="7" />
+      </div>
+      <button class="btn is-primary" type="submit">Save targets</button>
+    </form>
+    <p class="note">Calorie targets should reflect your maintenance needs and goals. Jeebs 2.O does not prescribe an aggressive deficit.</p>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Export your data</div>
+      <span class="card-sub">Always yours</span>
+    </div>
+    <a class="btn is-block" href="/export/json"><i data-lucide="download"></i>Download everything (JSON)</a>
+    <div class="chips">
+      <% datasets.forEach(function (dataset) { %>
+        <a class="chip" href="/export/csv/<%= dataset.key %>">CSV · <%= dataset.label %></a>
+      <% }); %>
+    </div>
+    <p class="note">Exports contain only your records. Sessions, password hashes and secrets are never included.</p>
+  </section>
+
+  <section class="card tight" style="border: 1px solid rgba(224, 90, 90, 0.32); background: linear-gradient(180deg, rgba(224, 90, 90, 0.05) 0%, transparent 100%);">
+    <div class="card-head">
+      <div>
+        <div class="card-title text-danger" style="color:var(--danger)">Reset Plan</div>
+        <span class="card-sub">Restart 90-day challenge & erase tracked data</span>
+      </div>
+      <i data-lucide="rotate-ccw" style="color:var(--danger)"></i>
+    </div>
+    <p class="small muted">
+      Want to start fresh? Resetting your plan will permanently erase all your currently tracked daily logs, hourly timeline records, water, meals, workouts, weight, sleep, habit history, and prayers, resetting your 90-day challenge so you can start from scratch.
+    </p>
+
+    <% if (challenge) { %>
+      <div class="note" style="margin: 8px 0; border-left-color: var(--danger);">
+        Current plan started: <strong><%= formatDateLong(challenge.startDate) %></strong> (Day <%= progress.dayNumber %> of <%= progress.duration %>)
+      </div>
+    <% } %>
+
+    <div class="stack" style="gap: 10px; margin-top: 10px;">
+      <div class="field">
+        <label for="reset-start-date">New Challenge Start Date</label>
+        <input type="date" id="reset-start-date" value="<%= today || todayKey %>" max="<%= today || todayKey %>" />
+        <span class="tiny muted">Day 1 of your new 90-day transformation (today or backdated).</span>
+      </div>
+
+      <button class="btn is-danger is-block" type="button" id="btn-reset-plan">
+        <i data-lucide="trash-2"></i> Reset 90-Day Challenge & Erase Data
+      </button>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Install on your phone</div>
+      <span class="card-sub">Works offline</span>
+    </div>
+    <p class="small muted">iPhone: Share → Add to Home Screen. Android: browser menu → Install app. Logging works offline; entries sync when you reconnect.</p>
+    <div class="sync-banner" id="sync-banner">
+      <i data-lucide="cloud-off"></i>
+      <span id="sync-text">All entries saved.</span>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">About Jeebs 2.O</div>
+      <span class="card-sub">Personal install</span>
+    </div>
+    <p class="small muted">Jeebs 2.O is a personal performance operating system: 24-hour accountability, hydration, nutrition, sleep, training, body weight and habits — all derived from your own records. Times are stored in UTC and shown in Asia/Kolkata.</p>
+  </section>
+</main>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'settings' }) %>

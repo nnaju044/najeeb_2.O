@@ -1,0 +1,18 @@
+[
+  {
+    "_id": "6ae4e9327ac2683c5d94af38",
+    "userId": "6ae4e8717ac2683c5d94af1d",
+    "startDate": "2026-10-31",
+    "durationDays": 90,
+    "targets": {
+      "waterMl": 2500,
+      "proteinG": 90,
+      "calories": 2200,
+      "sleepMinutes": 480,
+      "workoutsPerWeek": 2
+    },
+    "createdAt": "2026-10-30T19:00:02.990Z",
+    "updatedAt": "2026-10-30T19:00:02.990Z",
+    "__v": 0
+  }
+]

@@ -1,0 +1,37 @@
+{
+  "name": "jeebs-2o",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jeebs 2.O — Build a better you. Personal 90-day life transformation and performance tracking app",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "icons": "node scripts/generateIcons.js",
+    "test": "node --test --test-force-exit --test-concurrency=1 \"tests/**/*.test.js\"",
+    "test:watch": "node --test --test-force-exit --watch \"tests/**/*.test.js\""
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "chart.js": "^4.4.7",
+    "compression": "^1.7.5",
+    "connect-mongo": "^5.1.0",
+    "dotenv": "^16.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "lucide": "^0.469.0",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.9.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^10.1.4",
+    "supertest": "^7.0.0"
+  }
+}

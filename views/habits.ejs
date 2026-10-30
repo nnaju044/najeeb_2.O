@@ -1,0 +1,104 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <%- include('partials/datenav', { basePath: '/habits', prevDate: prevDate, nextDate: nextDate, label: dateLabel, sub: weekday, isToday: isToday }) %>
+
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow">Daily habits</p>
+        <div class="day-number"><%= day.done %><span> / <%= day.applicable %></span></div>
+        <p class="muted small">
+          <%= day.percent %>% complete
+          <% if (day.skipped) { %> · <%= day.skipped %> skipped<% } %>
+          · <%= streak.currentStreakDays %>-day streak
+        </p>
+      </div>
+      <%- include('partials/ring', { percent: day.percent, value: Math.round(day.percent) + '%', label: 'today', size: 100, stroke: 9, color: 'var(--success)' }) %>
+    </div>
+    <p class="note">Skipping a habit is neutral: it reduces the applicable total instead of counting as a failure.</p>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Today</div>
+      <span class="card-sub">One tap per habit</span>
+    </div>
+    <div class="list" id="habit-list">
+      <% day.habits.forEach(function (habit) { %>
+        <div class="stack-sm" data-habit-row="<%= habit._id %>">
+          <div class="between">
+            <span class="list-item-main">
+              <span class="list-item-title"><%= habit.name %></span>
+              <span class="list-item-meta">
+                <%= habit.status ? (habit.status === 'done' ? 'Completed' : habit.status === 'skipped' ? 'Skipped' : 'Not applicable') : 'Not marked' %>
+              </span>
+            </span>
+            <button class="icon-btn" type="button" data-archive-habit="<%= habit._id %>" aria-label="Archive habit"><i data-lucide="archive"></i></button>
+          </div>
+          <div class="chips">
+            <button class="chip <%= habit.status === 'done' ? 'is-done' : '' %>" type="button" data-set-status="done" data-habit-id="<%= habit._id %>" data-date="<%= dateKey %>"><i data-lucide="check"></i>Done</button>
+            <button class="chip <%= habit.status === 'skipped' ? 'is-skipped' : '' %>" type="button" data-set-status="skipped" data-habit-id="<%= habit._id %>" data-date="<%= dateKey %>">Skip</button>
+            <button class="chip <%= habit.status === 'na' ? 'is-na' : '' %>" type="button" data-set-status="na" data-habit-id="<%= habit._id %>" data-date="<%= dateKey %>">N/A</button>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Last 7 days</div>
+      <span class="card-sub"><%= stats.consistencyPercent %>% consistent</span>
+    </div>
+    <div class="week-grid scroll-x">
+      <div class="week-grid-row week-grid-head">
+        <span>Habit</span>
+        <% gridDays.forEach(function (gridDay) { %><span class="center"><%= gridDay.label %></span><% }); %>
+      </div>
+      <% day.habits.forEach(function (habit) { %>
+        <div class="week-grid-row">
+          <span class="small nowrap" style="overflow:hidden;text-overflow:ellipsis"><%= habit.name %></span>
+          <% gridDays.forEach(function (gridDay) { %>
+            <% const marked = completionSet.has(habit._id + ':' + gridDay.key); %>
+            <span class="week-cell <%= marked ? 'is-done' : '' %> <%= gridDay.key === dateKey ? 'is-today' : '' %>">
+              <%= marked ? '✓' : '·' %>
+            </span>
+          <% }); %>
+        </div>
+      <% }); %>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-habits" aria-label="Habit completion percentage over seven days" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Your habits</div>
+      <span class="card-sub"><%= day.total %> active</span>
+    </div>
+    <div class="list">
+      <% stats.habits.forEach(function (habit) { %>
+        <div class="list-item">
+          <span class="list-item-main">
+            <span class="list-item-title"><%= habit.name %></span>
+            <span class="list-item-meta"><%= habit.done %> done · <%= habit.skipped %> skipped this week</span>
+          </span>
+          <span class="tag success"><%= habit.done %> done</span>
+        </div>
+      <% }); %>
+    </div>
+    <details>
+      <summary class="group-label">Add a habit</summary>
+      <div class="stack-sm" style="margin-top:10px">
+        <input type="text" id="habit-name" placeholder="Habit name" maxlength="120" />
+        <button class="btn is-sm" type="button" id="save-habit">Add habit</button>
+      </div>
+    </details>
+  </section>
+</main>
+
+<script type="application/json" id="page-data"><%- safeJson({ dateKey: dateKey, days: stats.days }) %></script>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'habits' }) %>

@@ -1,0 +1,15 @@
+[
+  {
+    "_id": "6ae4afb4b2c38b68c0ecce45",
+    "userId": "6ae4af014896e7716b9c20f4",
+    "dateKey": "2026-10-30",
+    "bedtime": "2026-10-29T18:00:00.000Z",
+    "wakeTime": "2026-10-30T01:30:00.000Z",
+    "durationMinutes": 450,
+    "quality": "good",
+    "notes": "",
+    "createdAt": "2026-10-30T14:54:44.101Z",
+    "updatedAt": "2026-10-30T14:54:44.101Z",
+    "__v": 0
+  }
+]

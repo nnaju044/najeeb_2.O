@@ -1,0 +1,200 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <%- include('partials/datenav', { basePath: '/time', prevDate: prevDate, nextDate: nextDate, label: dateLabel, sub: weekday, isToday: isToday }) %>
+
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow">24-hour accounting</p>
+        <h1><%= (day.recordedMinutes / 60).toFixed(1) %> h of 24 tracked</h1>
+        <p class="muted small"><%= day.unclassifiedMinutes %> minutes unclassified — never treated as unproductive.</p>
+      </div>
+      <%- include('partials/ring', { percent: day.accountedPercent, value: day.accountedPercent + '%', label: 'accounted', size: 96, stroke: 8 }) %>
+    </div>
+    <div class="grid grid-4">
+      <div class="metric">
+        <span class="metric-label">Productive</span>
+        <span class="metric-value"><%= (day.totals.productive / 60).toFixed(1) %><small>h</small></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Unproductive</span>
+        <span class="metric-value"><%= (day.totals.unproductive / 60).toFixed(1) %><small>h</small></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Rest</span>
+        <span class="metric-value"><%= (day.totals.rest / 60).toFixed(1) %><small>h</small></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Sleep</span>
+        <span class="metric-value"><%= (day.totals.sleep / 60).toFixed(1) %><small>h</small></span>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="legend-dot seg productive"></i>Productive <%= day.productivePercent %>% of tracked</span>
+      <span><i class="legend-dot seg unproductive"></i><%= day.unproductivePercent %>%</span>
+      <span><i class="legend-dot seg rest"></i><%= day.restPercent %>%</span>
+      <span><i class="legend-dot seg sleep"></i><%= day.sleepOfRecordedPercent %>%</span>
+    </div>
+    <% if (day.bestHour) { %>
+      <div class="note">
+        Best hour: <strong><%= day.bestHour.label %></strong> with <%= day.bestHour.productive %> productive minutes.
+        <% if (day.bestPeriod) { %>Strongest period: <strong><%= day.bestPeriod.label %></strong>.<% } %>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div>
+        <div class="card-title">Every hour of <%= weekday %></div>
+        <div class="card-sub">Tap an hour to record it</div>
+      </div>
+      <button class="btn is-sm" type="button" id="copy-yesterday" data-source="<%= yesterday %>" data-target="<%= dateKey %>">
+        <i data-lucide="copy"></i>Copy
+      </button>
+    </div>
+    <div class="hour-list" id="hour-list">
+      <% day.hours.forEach(function (hour) { %>
+        <button
+          class="hour-row <%= hour.tracked ? 'has-data' : 'is-untracked' %>"
+          type="button"
+          data-hour-row
+          data-hour="<%= hour.hour %>"
+          data-label="<%= hour.label %>"
+          data-productive="<%= hour.productive %>"
+          data-unproductive="<%= hour.unproductive %>"
+          data-rest="<%= hour.rest %>"
+          data-sleep="<%= hour.sleep %>"
+          data-total="<%= hour.total %>"
+        >
+          <span class="hour-label"><%= hour.label.replace(' – ', '–') %></span>
+          <span class="hour-bar">
+            <% if (hour.productive) { %><span class="seg productive" style="width:<%= (hour.productive / 60) * 100 %>%"></span><% } %>
+            <% if (hour.unproductive) { %><span class="seg unproductive" style="width:<%= (hour.unproductive / 60) * 100 %>%"></span><% } %>
+            <% if (hour.rest) { %><span class="seg rest" style="width:<%= (hour.rest / 60) * 100 %>%"></span><% } %>
+            <% if (hour.sleep) { %><span class="seg sleep" style="width:<%= (hour.sleep / 60) * 100 %>%"></span><% } %>
+          </span>
+          <span class="hour-total <%= hour.total === 60 ? 'is-full' : '' %>">
+            <%= hour.total %><small>min</small>
+          </span>
+        </button>
+      <% }); %>
+    </div>
+    <p class="note">Each hour holds at most 60 minutes. A full day therefore caps at 1,440 minutes, and untracked hours stay untracked.</p>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Hourly split</div>
+      <span class="card-sub"><%= dateLabel %></span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-hourly" aria-label="Hourly productive and unproductive minutes" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Where the recorded time went</div>
+      <span class="card-sub">Excludes untracked minutes</span>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-doughnut" aria-label="Productive, unproductive, rest and sleep split" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Last 7 days</div>
+      <span class="card-sub">Recorded vs productive</span>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-week" aria-label="Seven day time accounting" role="img"></canvas></div>
+    <div class="list" id="work-shortcut">
+      <a class="list-item" href="/work">
+        <span class="list-item-main">
+          <span class="list-item-title">Focused work sessions</span>
+          <span class="list-item-meta">Logs flow into productive time without double-counting</span>
+        </span>
+        <span class="tag accent"><i data-lucide="arrow-right"></i></span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+<div class="sheet" id="hour-sheet" role="dialog" aria-modal="true" aria-labelledby="hour-sheet-title">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-head">
+    <div>
+      <div class="card-title" id="hour-sheet-title">Hour</div>
+      <div class="card-sub" id="hour-sheet-sub">Record how the hour was spent</div>
+    </div>
+    <button class="icon-btn" type="button" data-close-sheet aria-label="Close"><i data-lucide="x"></i></button>
+  </div>
+  <div class="sheet-body">
+    <div class="stack" id="hour-groups">
+      <div class="stack-sm" data-category="productive">
+        <div class="group-label"><span><i class="legend-dot seg productive"></i> Productive</span><span data-readout="productive">0 min</span></div>
+        <div class="chips" data-chips="productive">
+          <button class="chip" type="button" data-value="0">0</button>
+          <button class="chip" type="button" data-value="15">15</button>
+          <button class="chip" type="button" data-value="30">30</button>
+          <button class="chip" type="button" data-value="45">45</button>
+          <button class="chip" type="button" data-value="60">60</button>
+        </div>
+        <input type="number" min="0" max="60" step="1" inputmode="numeric" data-input="productive" aria-label="Productive minutes" />
+      </div>
+      <div class="stack-sm" data-category="unproductive">
+        <div class="group-label"><span><i class="legend-dot seg unproductive"></i> Unproductive</span><span data-readout="unproductive">0 min</span></div>
+        <div class="chips" data-chips="unproductive">
+          <button class="chip" type="button" data-value="0">0</button>
+          <button class="chip" type="button" data-value="15">15</button>
+          <button class="chip" type="button" data-value="30">30</button>
+          <button class="chip" type="button" data-value="45">45</button>
+          <button class="chip" type="button" data-value="60">60</button>
+        </div>
+        <input type="number" min="0" max="60" step="1" inputmode="numeric" data-input="unproductive" aria-label="Unproductive minutes" />
+      </div>
+      <div class="stack-sm" data-category="rest">
+        <div class="group-label"><span><i class="legend-dot seg rest"></i> Rest / personal</span><span data-readout="rest">0 min</span></div>
+        <div class="chips" data-chips="rest">
+          <button class="chip" type="button" data-value="0">0</button>
+          <button class="chip" type="button" data-value="15">15</button>
+          <button class="chip" type="button" data-value="30">30</button>
+          <button class="chip" type="button" data-value="45">45</button>
+          <button class="chip" type="button" data-value="60">60</button>
+        </div>
+        <input type="number" min="0" max="60" step="1" inputmode="numeric" data-input="rest" aria-label="Rest minutes" />
+      </div>
+      <div class="stack-sm" data-category="sleep">
+        <div class="group-label"><span><i class="legend-dot seg sleep"></i> Sleep</span><span data-readout="sleep">0 min</span></div>
+        <div class="chips" data-chips="sleep">
+          <button class="chip" type="button" data-value="0">0</button>
+          <button class="chip" type="button" data-value="15">15</button>
+          <button class="chip" type="button" data-value="30">30</button>
+          <button class="chip" type="button" data-value="45">45</button>
+          <button class="chip" type="button" data-value="60">60</button>
+        </div>
+        <input type="number" min="0" max="60" step="1" inputmode="numeric" data-input="sleep" aria-label="Sleep minutes" />
+      </div>
+    </div>
+
+    <div class="balance" id="hour-balance">
+      <span>Unclassified</span>
+      <strong><span id="hour-remaining">60</span> min</strong>
+    </div>
+
+    <div class="chips">
+      <button class="chip" type="button" id="mark-sleep"><i data-lucide="moon"></i>Whole hour sleep</button>
+      <button class="chip" type="button" id="clear-hour"><i data-lucide="eraser"></i>Clear hour</button>
+    </div>
+    <p class="note">Saving with 60 minutes total records the full hour. Anything left over is stored as unclassified, not unproductive.</p>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn is-ghost" type="button" data-close-sheet>Cancel</button>
+    <button class="btn is-primary" type="button" id="save-hour">Save hour</button>
+  </div>
+</div>
+
+<script type="application/json" id="page-data"><%- safeJson({ dateKey: dateKey, hours: day.hours, week: week }) %></script>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'time' }) %>

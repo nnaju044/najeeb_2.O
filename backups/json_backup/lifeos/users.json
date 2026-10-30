@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "6ae4af014896e7716b9c20f4",
+    "email": "owner@lifeos.test",
+    "name": "Najeeb",
+    "passwordHash": "$2a$12$H0s5LvUVEMyQNVM9xXMi0eHKF3sybTkpk5UwQ52Iu8hZGA4axlwyq",
+    "timezone": "Asia/Kolkata",
+    "theme": "light",
+    "createdAt": "2026-10-30T14:51:45.605Z",
+    "updatedAt": "2026-10-30T18:35:49.060Z",
+    "__v": 0
+  }
+]

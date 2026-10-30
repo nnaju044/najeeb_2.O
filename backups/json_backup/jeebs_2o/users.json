@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "6ae4e8717ac2683c5d94af1d",
+    "email": "nnaju044@gmail.com",
+    "name": "najeeb",
+    "passwordHash": "$2a$12$BZTddg/OqVvCIFZ51LRV3egKRgiOlxLoiV/yPPNXwjvbVRDRVqWVS",
+    "timezone": "Asia/Kolkata",
+    "theme": "dark",
+    "createdAt": "2026-10-30T18:56:49.375Z",
+    "updatedAt": "2026-10-30T19:10:14.977Z",
+    "__v": 0
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "_id": "6ae4afb4b2c38b68c0ecce5a",
+    "userId": "6ae4af014896e7716b9c20f4",
+    "dateKey": "2026-10-30",
+    "startTime": "10:00",
+    "durationMinutes": 60,
+    "category": "Coding",
+    "project": "LIFEOS",
+    "notes": "",
+    "allocatedMinutes": 60,
+    "allocations": [],
+    "createdAt": "2026-10-30T14:54:44.161Z",
+    "updatedAt": "2026-10-30T14:54:44.161Z",
+    "__v": 0
+  }
+]

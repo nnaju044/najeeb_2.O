@@ -1,0 +1,13 @@
+[
+  {
+    "_id": "6ae4af5c95c9cd3fdf492f6a",
+    "userId": "6ae4af014896e7716b9c20f4",
+    "dateKey": "2026-10-30",
+    "amountMl": 500,
+    "loggedAt": "2026-10-30T14:53:16.079Z",
+    "clientId": "2026-10-30:500:test_water_1",
+    "createdAt": "2026-10-30T14:53:16.081Z",
+    "updatedAt": "2026-10-30T14:53:16.081Z",
+    "__v": 0
+  }
+]

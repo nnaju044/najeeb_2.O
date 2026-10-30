@@ -1,0 +1,129 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+<% if (!challenge) { %>
+  <section class="card hero">
+    <div class="auth-hero">
+      <p class="eyebrow">90-day challenge</p>
+      <h1>One start date. Ninety days. All 1,440 minutes.</h1>
+      <p class="muted small">Pick the day your challenge begins. Jeebs 2.O calculates Day 1 through Day 90, splits them into 13 weekly periods, and generates a report from your actual records at the end of every week.</p>
+    </div>
+    <form method="post" action="/challenge/start" class="stack">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+      <div class="field">
+        <label for="startDate">Challenge start date</label>
+        <input type="date" id="startDate" name="startDate" value="<%= defaultStart %>" max="<%= today %>" required />
+      </div>
+      <button class="btn is-primary is-block" type="submit">Start Day 1 <i data-lucide="arrow-right"></i></button>
+    </form>
+    <div class="note">Your start date is stored permanently. Daily records, weeks and badges all derive from it, and nothing is reset when a new day begins.</div>
+  </section>
+<% } else { %>
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow">Challenge</p>
+        <div class="day-number">Day <%= Math.min(progress.dayNumber, challenge.durationDays) %><span> / <%= challenge.durationDays %></span></div>
+        <p class="muted small">
+          Started <%= formatDateLong(challenge.startDate) %>
+          <% if (progress.status === 'completed') { %> · completed<% } else { %> · <%= progress.remainingDays %> days left<% } %>
+        </p>
+      </div>
+      <%- include('partials/ring', { percent: progress.completionPercent, value: Math.round(progress.completionPercent) + '%', label: 'elapsed', size: 100, stroke: 9 }) %>
+    </div>
+    <div class="grid grid-3">
+      <div class="metric">
+        <span class="metric-label">Week</span>
+        <span class="metric-value"><%= progress.weekNumber %><small>/13</small></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Reports</span>
+        <span class="metric-value"><%= reports.length %></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Badges</span>
+        <span class="metric-value"><%= achievements.filter(function (a) { return a.earned; }).length %></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Milestones</div>
+      <span class="card-sub">Time-based, from your start date</span>
+    </div>
+    <div class="milestone-list">
+      <% milestones.forEach(function (milestone) { %>
+        <div class="milestone <%= milestone.reached ? 'is-done' : 'is-current' %>">
+          <span class="milestone-dot"></span>
+          <span>Day <%= milestone.day %> <%= milestone.day === 90 ? '· Finisher' : 'milestone' %></span>
+          <span class="tag <%= milestone.reached ? 'success' : '' %>"><%= formatDateShort(milestone.dateKey) %></span>
+        </div>
+      <% }); %>
+    </div>
+    <div class="divider"></div>
+    <div class="list">
+      <a class="list-item" href="/progress">
+        <span class="list-item-main">
+          <span class="list-item-title">Weekly reports & analytics</span>
+          <span class="list-item-meta"><%= reports.length %> generated from your records</span>
+        </span>
+        <span class="tag accent"><i data-lucide="arrow-right"></i></span>
+      </a>
+      <a class="list-item" href="/settings">
+        <span class="list-item-main">
+          <span class="list-item-title">Targets</span>
+          <span class="list-item-meta"><%= targets.waterMl %> ml water · <%= targets.proteinG %> g protein · <%= targets.calories %> kcal · <%= (targets.sleepMinutes / 60).toFixed(1) %> h sleep</span>
+        </span>
+        <span class="tag"><i data-lucide="settings"></i></span>
+      </a>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">13 weekly periods</div>
+      <span class="card-sub">Reports appear as each week ends</span>
+    </div>
+    <div class="stack-sm">
+      <% weeks.forEach(function (week) { %>
+        <div class="week-card <%= week.status === 'current' ? 'is-current' : '' %> <%= week.status === 'upcoming' ? 'is-upcoming' : '' %>">
+          <div class="between">
+            <strong class="small">Week <%= week.weekNumber %> · Days <%= week.startDay %>–<%= week.endDay %></strong>
+            <span class="tag <%= week.report ? 'success' : week.status === 'current' ? 'accent' : '' %>">
+              <%= week.report ? week.report.achievementPercent + '/100' : week.status === 'current' ? 'In progress' : week.status === 'upcoming' ? 'Upcoming' : 'Awaiting data' %>
+            </span>
+          </div>
+          <span class="tiny muted"><%= formatDateShort(week.startDate) %> – <%= formatDateShort(week.endDate) %></span>
+          <% if (week.report) { %>
+            <div class="between tiny">
+              <span class="muted">Productive <strong style="color:var(--text)"><%= week.report.stats.productiveHours %> h</strong></span>
+              <span class="muted">Workouts <strong style="color:var(--text)"><%= week.report.stats.workouts %></strong></span>
+              <span class="muted">Water <strong style="color:var(--text)"><%= (week.report.stats.avgWaterMl / 1000).toFixed(1) %> L</strong></span>
+            </div>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <% if (finalReport && finalReport.available) { %>
+    <section class="card tight">
+      <div class="card-title">90-day report ready</div>
+      <p class="muted small">Compare week 1 with week 13, including productivity, sleep, weight, gym and habit consistency.</p>
+      <a class="btn is-primary is-block" href="/progress">Open transformation report</a>
+    </section>
+  <% } else { %>
+    <section class="card tight">
+      <div class="card-title">90-day report</div>
+      <p class="muted small">
+        <% if (finalReport) { %>Unlocks after Day 90 — <%= finalReport.daysRemaining %> days remaining.<% } else { %>Unlocks after Day 90.<% } %>
+      </p>
+    </section>
+  <% } %>
+<% } %>
+</main>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: null }) %>

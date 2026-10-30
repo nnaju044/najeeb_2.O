@@ -1,0 +1,116 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow"><%= weekday %> · <%= todayLabel %></p>
+        <div class="day-number"><%= (day.totalMinutes / 60).toFixed(1) %><span> h focused</span></div>
+        <p class="muted small">This week: <%= week.totalHours %> h across <%= week.activeDays %> active day<%= week.activeDays === 1 ? '' : 's' %></p>
+      </div>
+      <%- include('partials/ring', {
+        percent: Math.min(100, (week.totalMinutes / 60 / 20) * 100),
+        value: week.totalHours + 'h',
+        label: '7 days',
+        size: 100,
+        stroke: 9
+      }) %>
+    </div>
+    <p class="note">Saving a session also fills the matching hours in the 24-hour tracker as productive time — never twice, and never over the 60-minute limit.</p>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Log a session</div>
+      <span class="card-sub">Quick select</span>
+    </div>
+    <div class="chips" id="work-categories">
+      <% categories.forEach(function (category, index) { %>
+        <button class="chip <%= index === 0 ? 'is-active' : '' %>" type="button" data-work-category="<%= category %>"><%= category %></button>
+      <% }); %>
+    </div>
+    <div class="chips" id="work-durations">
+      <% durations.forEach(function (duration) { %>
+        <button class="chip" type="button" data-work-duration="<%= duration %>"><%= duration %> min</button>
+      <% }); %>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="work-start">Start time</label>
+        <input type="time" id="work-start" value="10:00" />
+      </div>
+      <div class="field">
+        <label for="work-duration">Minutes</label>
+        <input type="number" id="work-duration" min="5" max="480" step="5" value="30" inputmode="numeric" />
+      </div>
+    </div>
+    <div class="field">
+      <label for="work-project">Project (optional)</label>
+      <input type="text" id="work-project" maxlength="80" placeholder="Jeebs 2.O, client site, YouTube…" />
+    </div>
+    <button class="btn is-primary is-block" type="button" id="save-work"><i data-lucide="timer"></i>Save session</button>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Today</div>
+      <span class="card-sub">Focused work</span>
+    </div>
+    <div class="list" id="work-sessions">
+      <% if (!day.sessions.length) { %>
+        <div class="empty"><i data-lucide="timer"></i><span>No focused sessions logged today.</span></div>
+      <% } %>
+      <% day.sessions.forEach(function (session) { %>
+        <div class="list-item">
+          <span class="list-item-main">
+            <span class="list-item-title"><%= session.category %><%= session.project ? ' · ' + session.project : '' %></span>
+            <span class="list-item-meta"><%= session.startTime %> · <%= session.durationMinutes %> min<%= session.allocatedMinutes ? ' · ' + session.allocatedMinutes + ' min into tracker' : '' %></span>
+          </span>
+          <button class="icon-btn" type="button" data-delete-work="<%= session._id %>" aria-label="Delete session"><i data-lucide="trash-2"></i></button>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Last 30 days</div>
+      <span class="card-sub"><%= month.totalHours %> h · avg <%= month.avgSessionMinutes %> min/session</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-work" aria-label="Focused work minutes over 30 days" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">By category</div>
+      <span class="card-sub">Last 30 days</span>
+    </div>
+    <% if (month.byCategory.length) { %>
+      <div class="list">
+        <% month.byCategory.forEach(function (row) { %>
+          <div class="progress-row">
+            <div class="progress-meta" style="min-width:120px"><span><%= row.category %></span><span><%= (row.minutes / 60).toFixed(1) %> h</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:<%= (row.minutes / month.totalMinutes) * 100 %>%"></div></div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <p class="muted small">Log sessions to see where your focus goes.</p>
+    <% } %>
+    <% if (month.byProject.length) { %>
+      <div class="divider"></div>
+      <div class="group-label"><span>Projects</span></div>
+      <div class="chips">
+        <% month.byProject.forEach(function (row) { %>
+          <span class="tag accent"><%= row.project %> · <%= (row.minutes / 60).toFixed(1) %>h</span>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<script type="application/json" id="page-data"><%- safeJson({ month: month }) %></script>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'work' }) %>

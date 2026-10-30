@@ -1,0 +1,118 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow"><%= todayLabel %></p>
+        <h1>Health</h1>
+        <p class="muted small">Water, food, sleep, weight and habits — recorded with as few taps as possible.</p>
+      </div>
+      <%- include('partials/ring', { percent: metrics.score, value: metrics.score, label: 'score', size: 92, stroke: 8 }) %>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div>
+        <div class="card-title">Water</div>
+        <div class="card-sub"><%= (water.totalMl / 1000).toFixed(2) %> of <%= (water.targetMl / 1000).toFixed(1) %> L</div>
+      </div>
+      <a class="btn is-sm" href="/water">Open</a>
+    </div>
+    <div class="bar-track"><div class="bar-fill sleep" style="width:<%= Math.min(100, water.percent) %>%"></div></div>
+    <div class="chips">
+      <button class="chip water" type="button" data-water-amount="250" data-date="<%= todayKey %>">250 ml</button>
+      <button class="chip water" type="button" data-water-amount="500" data-date="<%= todayKey %>">500 ml</button>
+      <button class="chip water" type="button" data-water-amount="1000" data-date="<%= todayKey %>">1 L</button>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div>
+        <div class="card-title">Nutrition</div>
+        <div class="card-sub"><%= Math.round(nutrition.totals.calories) %> kcal · <%= Math.round(nutrition.totals.protein) %> g protein</div>
+      </div>
+      <a class="btn is-sm" href="/food">Open</a>
+    </div>
+    <div class="progress-row">
+      <div class="progress-meta"><span>Protein</span><span><%= nutrition.proteinPercent %>%</span></div>
+      <div class="bar-track"><div class="bar-fill success" style="width:<%= Math.min(100, nutrition.proteinPercent) %>%"></div></div>
+    </div>
+    <div class="progress-row">
+      <div class="progress-meta"><span>Calories</span><span><%= nutrition.caloriePercent %>%</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:<%= Math.min(100, nutrition.caloriePercent) %>%"></div></div>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div>
+        <div class="card-title">Sleep</div>
+        <div class="card-sub">
+          <%= (sleep.totalMinutes / 60).toFixed(1) %> h logged · target <%= (sleepTarget / 60).toFixed(1) %> h
+        </div>
+      </div>
+      <a class="btn is-sm" href="/sleep">Open</a>
+    </div>
+    <div class="bar-track"><div class="bar-fill sleep" style="width:<%= Math.min(100, (sleep.totalMinutes / sleepTarget) * 100) %>%"></div></div>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div>
+        <div class="card-title">Body weight</div>
+        <div class="card-sub">
+          <%= weight.latest ? weight.latest.weightKg + ' kg · ' + (weight.changeKg === null ? 'first entry' : (weight.changeKg > 0 ? '+' : '') + weight.changeKg + ' kg change') : 'No entries yet' %>
+        </div>
+      </div>
+      <a class="btn is-sm" href="/weight">Open</a>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="between">
+      <div>
+        <div class="card-title">Habits</div>
+        <div class="card-sub"><%= habits.done %>/<%= habits.applicable %> done today</div>
+      </div>
+      <a class="btn is-sm" href="/habits">Open</a>
+    </div>
+    <div class="bar-track"><div class="bar-fill warning" style="width:<%= Math.min(100, habits.percent) %>%"></div></div>
+  </section>
+
+  <% if (currentUser && currentUser.prayerTrackerEnabled) { %>
+    <section class="card tight">
+      <div class="between" style="align-items:center">
+        <div>
+          <div class="card-title">Daily Prayers</div>
+          <div class="card-sub">Five daily prayers tracker</div>
+        </div>
+        <a class="btn is-sm" href="/prayer">Open</a>
+      </div>
+    </section>
+  <% } %>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Today's score</div>
+      <span class="card-sub">Weighted from real records</span>
+    </div>
+    <div class="grid grid-2">
+      <div class="metric"><span class="metric-label">Time</span><span class="metric-value"><%= metrics.scoreComponents.time %><small>%</small></span><span class="metric-note">30% of score</span></div>
+      <div class="metric"><span class="metric-label">Water</span><span class="metric-value"><%= metrics.scoreComponents.water %><small>%</small></span><span class="metric-note">20% of score</span></div>
+      <div class="metric"><span class="metric-label">Habits</span><span class="metric-value"><%= metrics.scoreComponents.habits %><small>%</small></span><span class="metric-note">15% of score</span></div>
+      <div class="metric"><span class="metric-label">Protein</span><span class="metric-value"><%= metrics.scoreComponents.protein %><small>%</small></span><span class="metric-note">15% of score</span></div>
+      <div class="metric"><span class="metric-label">Sleep</span><span class="metric-value"><%= metrics.scoreComponents.sleep %><small>%</small></span><span class="metric-note">15% of score</span></div>
+      <div class="metric"><span class="metric-label">Workout</span><span class="metric-value"><%= metrics.scoreComponents.workout %><small>%</small></span><span class="metric-note">5% of score</span></div>
+    </div>
+    <% if (metrics.missing.length) { %>
+      <p class="note">Missing today: <%= metrics.missing.join(', ') %>. Missing data scores zero — it is never invented.</p>
+    <% } %>
+  </section>
+</main>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'health' }) %>

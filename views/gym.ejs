@@ -1,0 +1,191 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow"><%= weekday %> · <%= todayLabel %></p>
+        <h1>Train, record, recover.</h1>
+        <p class="muted small">Two full-body sessions a week, plus walking and recovery. No grinding through pain.</p>
+      </div>
+      <%- include('partials/ring', {
+        percent: Math.min(100, (weekStats.workoutCount / (targets.workoutsPerWeek || 2)) * 100),
+        value: weekStats.workoutCount + '/' + (targets.workoutsPerWeek || 2),
+        label: 'this week',
+        size: 100,
+        stroke: 9,
+        color: 'var(--success)'
+      }) %>
+    </div>
+    <div class="grid grid-3">
+      <div class="metric">
+        <span class="metric-label">Workout days</span>
+        <span class="metric-value"><%= weekStats.activeDays %></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Volume</span>
+        <span class="metric-value"><%= weekStats.volumeKg.toLocaleString('en-IN') %><small>kg</small></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Streak</span>
+        <span class="metric-value"><%= streak.currentStreakDays %><small>days</small></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div>
+        <div class="card-title">Log a workout</div>
+        <div class="card-sub">Pick exercises, then sets</div>
+      </div>
+      <button class="btn is-sm is-primary" type="button" id="open-workout"><i data-lucide="plus"></i>New</button>
+    </div>
+    <div class="list">
+      <% if (!history.length) { %>
+        <div class="empty">
+          <i data-lucide="dumbbell"></i>
+          <span>No workouts recorded yet. Start with one full-body session.</span>
+        </div>
+      <% } %>
+      <% history.forEach(function (workout) { %>
+        <div class="list-item">
+          <span class="list-item-main">
+            <span class="list-item-title"><%= workout.name %></span>
+            <span class="list-item-meta">
+              <%= formatDateShort(workout.dateKey) %> · <%= workout.durationMinutes %> min ·
+              <%= (workout.exercises || []).length %> exercises
+              <% if ((workout.exercises || []).length) { %>
+                · <%= (workout.exercises || []).map(function (exercise) { return exercise.name; }).slice(0, 2).join(', ') %>
+              <% } %>
+            </span>
+          </span>
+          <span class="list-item-actions">
+            <span class="tag success"><%= workout.completed ? 'Done' : 'Planned' %></span>
+            <button class="icon-btn" type="button" data-delete-workout="<%= workout._id %>" aria-label="Delete workout"><i data-lucide="trash-2"></i></button>
+          </span>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Consistency</div>
+      <span class="card-sub">Last 28 days</span>
+    </div>
+    <div class="chart-wrap sm"><canvas id="chart-gym" aria-label="Workouts per day over 28 days" role="img"></canvas></div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Strength progression</div>
+      <span class="card-sub">Max weight per session</span>
+    </div>
+    <form method="get" action="/gym" class="field">
+      <label for="exercise-select">Exercise</label>
+      <select id="exercise-select" name="exercise" data-auto-submit>
+        <% exercises.forEach(function (exercise) { %>
+          <option value="<%= exercise.name %>" <%= exercise.name === exerciseName ? 'selected' : '' %>><%= exercise.name %> · <%= exercise.muscleGroup %></option>
+        <% }); %>
+      </select>
+    </form>
+    <% if (progression.length) { %>
+      <div class="chart-wrap sm"><canvas id="chart-progression" aria-label="Strength progression" role="img"></canvas></div>
+    <% } else { %>
+      <p class="muted small">Log sets with weight for this exercise to see progression.</p>
+    <% } %>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Exercise library</div>
+      <span class="card-sub"><%= exercises.length %> exercises</span>
+    </div>
+    <details>
+      <summary class="group-label">Add a custom exercise</summary>
+      <div class="stack-sm" style="margin-top:10px">
+        <input type="text" id="exercise-name" placeholder="Exercise name" maxlength="120" />
+        <select id="exercise-muscle">
+          <% muscleGroups.forEach(function (group) { %>
+            <option value="<%= group %>"><%= group %></option>
+          <% }); %>
+        </select>
+        <input type="text" id="exercise-equipment" placeholder="Equipment (optional)" maxlength="60" />
+        <button class="btn is-sm" type="button" id="save-exercise">Add exercise</button>
+      </div>
+    </details>
+    <div class="chips" style="max-height:150px;overflow-y:auto">
+      <% exercises.slice(0, 40).forEach(function (exercise) { %>
+        <span class="tag"><%= exercise.name %></span>
+      <% }); %>
+    </div>
+  </section>
+</main>
+
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+<div class="sheet" id="workout-sheet" role="dialog" aria-modal="true" aria-labelledby="workout-title">
+  <div class="sheet-grabber"></div>
+  <div class="sheet-head">
+    <div>
+      <div class="card-title" id="workout-title">New workout</div>
+      <div class="card-sub"><%= todayLabel %></div>
+    </div>
+    <button class="icon-btn" type="button" data-close-sheet aria-label="Close"><i data-lucide="x"></i></button>
+  </div>
+  <div class="sheet-body">
+    <div class="stack-sm">
+      <div class="group-label"><span>Type</span></div>
+      <div class="chips" id="workout-types">
+        <% workoutTypes.forEach(function (type, index) { %>
+          <button class="chip <%= index === 0 ? 'is-active' : '' %>" type="button" data-workout-type="<%= type.value %>"><%= type.label %></button>
+        <% }); %>
+      </div>
+    </div>
+
+    <div class="stack-sm">
+      <div class="group-label"><span>Duration</span></div>
+      <div class="chips" id="workout-durations">
+        <button class="chip" type="button" data-duration="30">30 min</button>
+        <button class="chip" type="button" data-duration="45">45 min</button>
+        <button class="chip is-active" type="button" data-duration="60">60 min</button>
+        <button class="chip" type="button" data-duration="75">75 min</button>
+        <button class="chip" type="button" data-duration="90">90 min</button>
+      </div>
+      <input type="number" id="workout-duration" min="0" max="600" value="60" inputmode="numeric" aria-label="Workout duration in minutes" />
+    </div>
+
+    <div class="field">
+      <label for="workout-name">Name</label>
+      <input type="text" id="workout-name" value="Full body" maxlength="120" />
+    </div>
+
+    <div class="field">
+      <label for="exercise-search">Add exercise</label>
+      <input type="text" id="exercise-search" placeholder="Search exercise library" autocomplete="off" />
+    </div>
+    <div class="list" id="exercise-results"></div>
+
+    <div class="divider"></div>
+    <div class="group-label"><span>Exercises in this workout</span><span id="exercise-count">0</span></div>
+    <div class="stack-sm" id="workout-exercises">
+      <p class="muted small" id="workout-empty">Add at least one exercise, or save a cardio/walk session as-is.</p>
+    </div>
+
+    <div class="field">
+      <label for="workout-notes">Notes</label>
+      <input type="text" id="workout-notes" maxlength="1000" placeholder="Felt strong, increased squat load…" />
+    </div>
+    <p class="note">Stop a set if you feel sharp pain. Progressive load matters more than training to exhaustion.</p>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn is-ghost" type="button" data-close-sheet>Cancel</button>
+    <button class="btn is-primary" type="button" id="save-workout">Save workout</button>
+  </div>
+</div>
+
+<script type="application/json" id="page-data"><%- safeJson({ exercises: exercises, weekly: weekly, progression: progression, exerciseName: exerciseName, todayKey: todayKey }) %></script>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'gym' }) %>

@@ -1,0 +1,121 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <!-- Day navigation header -->
+  <section class="card hero">
+    <div class="between" style="align-items:center;margin-bottom:8px">
+      <a class="chip" href="/prayer/<%= prevDate %>"><i data-lucide="chevron-left"></i><%= isToday ? 'Yesterday' : 'Previous' %></a>
+      <span class="eyebrow" style="margin:0"><%= weekday %> · <%= dateLabel %></span>
+      <% if (nextDate) { %>
+        <a class="chip" href="/prayer/<%= nextDate %>">Next<i data-lucide="chevron-right"></i></a>
+      <% } else { %>
+        <span class="chip is-active">Today</span>
+      <% } %>
+    </div>
+    <div class="hero-head" style="margin-top:12px">
+      <div class="stack-sm">
+        <p class="eyebrow">Five Daily Prayers</p>
+        <h1 style="font-size:1.8rem;margin:0"><%= day.completedCount %> / 5 <span class="small muted" style="font-size:1rem;font-weight:400">Prayers</span></h1>
+        <p class="muted small">
+          <% if (day.completedCount === 5) { %>
+            All five prayers completed today.
+          <% } else if (day.completedCount === 0) { %>
+            None logged yet. Tap a prayer to record completion.
+          <% } else { %>
+            <%= day.completedCount %> of 5 prayers offered (<%= day.percent %>%).
+          <% } %>
+        </p>
+      </div>
+      <%- include('partials/ring', { percent: day.percent, value: day.percent, label: '%', size: 84, stroke: 7 }) %>
+    </div>
+    <div class="bar-track" style="margin-top:12px">
+      <div class="bar-fill" id="prayer-page-bar" style="width:<%= day.percent %>%;background:var(--accent)"></div>
+    </div>
+  </section>
+
+  <!-- Five prayers list with one-tap controls -->
+  <section class="card tight" id="prayer-list-card" data-date="<%= dateKey %>">
+    <div class="card-head">
+      <div class="card-title">Prayers for <%= isToday ? 'Today' : dateLabel %></div>
+      <span class="card-sub" id="prayer-page-summary"><%= day.completedCount %> of 5 completed</span>
+    </div>
+
+    <div class="stack" style="gap:10px" id="prayer-items-container">
+      <% day.prayers.forEach(function (p) { %>
+        <div class="prayer-row <%= p.completed ? 'is-completed' : '' %>" data-prayer="<%= p.name %>" data-completed="<%= p.completed ? 'true' : 'false' %>">
+          <div class="prayer-row-info">
+            <span class="prayer-icon-box">
+              <i data-lucide="<%= p.completed ? 'check' : p.icon %>"></i>
+            </span>
+            <div>
+              <div class="prayer-row-title"><%= p.name %></div>
+              <div class="prayer-row-period small muted"><%= p.period %></div>
+            </div>
+          </div>
+          <button class="btn is-sm prayer-toggle-btn <%= p.completed ? 'is-primary' : '' %>" type="button" aria-label="Toggle <%= p.name %>">
+            <i data-lucide="<%= p.completed ? 'check' : 'circle' %>"></i>
+            <span><%= p.completed ? 'Completed' : 'Mark done' %></span>
+          </button>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <!-- Analytics & Trends Section -->
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Prayer Analytics</div>
+      <span class="card-sub">Independent of productivity scores</span>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom:16px">
+      <div class="metric">
+        <span class="metric-label">7-day total</span>
+        <span class="metric-value"><%= analytics.week.completed %><small>/<%= analytics.week.possible %></small></span>
+        <span class="metric-note"><%= analytics.week.percent %>% of week</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">30-day total</span>
+        <span class="metric-value"><%= analytics.month.completed %><small>/<%= analytics.month.possible %></small></span>
+        <span class="metric-note"><%= analytics.month.percent %>% of month</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">5/5 Streak</span>
+        <span class="metric-value"><%= analytics.streak %><small>d</small></span>
+        <span class="metric-note">consecutive</span>
+      </div>
+    </div>
+
+    <!-- 7-day mini bar chart -->
+    <div class="group-label"><span>Last 7 days</span><span><%= analytics.week.completed %> / <%= analytics.week.possible %> prayers</span></div>
+    <div class="week-strip" style="margin-bottom:16px">
+      <% analytics.week.days.forEach(function (dayRow) { %>
+        <a class="week-day <%= dayRow.dateKey === dateKey ? 'is-today' : '' %>" href="/prayer/<%= dayRow.dateKey %>" style="text-decoration:none">
+          <div class="week-bar"><span style="height:<%= Math.max(5, dayRow.percent) %>%;background:var(--accent)"></span></div>
+          <span style="font-weight:<%= dayRow.dateKey === dateKey ? '700' : '500' %>"><%= dayRow.label %></span>
+          <span class="tiny muted"><%= dayRow.completedCount %>/5</span>
+        </a>
+      <% }); %>
+    </div>
+
+    <!-- Per-prayer historical breakdown -->
+    <div class="group-label"><span>All-time breakdown</span><span><%= analytics.totalOfferedAllTime %> total prayers</span></div>
+    <div class="stack-sm">
+      <% analytics.prayers.forEach(function (stat) { %>
+        <div class="progress-row">
+          <div class="progress-meta">
+            <span><i data-lucide="<%= stat.icon %>" style="width:14px;height:14px;vertical-align:middle;margin-right:6px"></i><%= stat.name %> (<%= stat.period %>)</span>
+            <span><%= stat.count %> times · <%= stat.percent %>%</span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:<%= stat.percent %>%;background:var(--accent)"></div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'prayer' }) %>

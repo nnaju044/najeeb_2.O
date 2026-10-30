@@ -1,0 +1,124 @@
+<%- include('partials/head', { title: title, page: page, active: active }) %>
+<%- include('partials/topbar') %>
+
+<main class="app-main">
+  <%- include('partials/datenav', { basePath: '/sleep', prevDate: prevDate, nextDate: nextDate, label: dateLabel, sub: weekday, isToday: isToday }) %>
+
+  <section class="card hero">
+    <div class="hero-head">
+      <div class="stack-sm">
+        <p class="eyebrow">Sleep</p>
+        <div class="day-number"><%= (day.totalMinutes / 60).toFixed(1) %><span> h</span></div>
+        <p class="muted small">
+          <%= day.sessionCount %> session<%= day.sessionCount === 1 ? '' : 's' %> · target <%= (targetMinutes / 60).toFixed(1) %> h
+          <% if (day.qualityLabel) { %> · <%= day.qualityLabel %><% } %>
+        </p>
+      </div>
+      <%- include('partials/ring', {
+        percent: targetMinutes ? Math.min(100, (day.totalMinutes / targetMinutes) * 100) : 0,
+        value: (day.totalMinutes / 60).toFixed(1) + 'h',
+        label: 'slept',
+        size: 100,
+        stroke: 9,
+        color: 'var(--sleep)'
+      }) %>
+    </div>
+    <div class="grid grid-2">
+      <div class="metric">
+        <span class="metric-label">7-day average</span>
+        <span class="metric-value"><%= consistency.avgMinutes ? (consistency.avgMinutes / 60).toFixed(1) : '—' %><small>h</small></span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">On target</span>
+        <span class="metric-value"><%= consistency.consistencyPercent %><small>%</small></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div>
+        <div class="card-title">Log sleep</div>
+        <div class="card-sub">Wake-up date: <%= dateLabel %></div>
+      </div>
+    </div>
+
+    <div class="stack-sm">
+      <div class="group-label"><span>Bedtime</span><span id="duration-preview" class="tag sleep">—</span></div>
+      <div class="chips" id="bed-chips">
+        <% bedPresets.forEach(function (time) { %>
+          <button class="chip" type="button" data-bed="<%= time %>"><%= time %></button>
+        <% }); %>
+      </div>
+      <input type="time" id="bed-time" value="02:00" aria-label="Bedtime" />
+    </div>
+
+    <div class="stack-sm">
+      <div class="group-label"><span>Wake up</span></div>
+      <div class="chips" id="wake-chips">
+        <% wakePresets.forEach(function (time) { %>
+          <button class="chip" type="button" data-wake="<%= time %>"><%= time %></button>
+        <% }); %>
+      </div>
+      <input type="time" id="wake-time" value="10:00" aria-label="Wake-up time" />
+    </div>
+
+    <div class="stack-sm">
+      <div class="group-label"><span>Sleep quality</span></div>
+      <div class="chips" id="quality-chips">
+        <% qualities.forEach(function (quality) { %>
+          <button class="chip" type="button" data-quality="<%= quality.value %>"><%= quality.label %></button>
+        <% }); %>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="sleep-notes">Notes (optional)</label>
+      <input type="text" id="sleep-notes" maxlength="300" placeholder="Woke up twice, room was warm…" />
+    </div>
+
+    <button class="btn is-primary is-block" type="button" id="save-sleep">
+      <i data-lucide="moon"></i>Save sleep
+    </button>
+    <p class="note">Sleep crossing midnight is handled automatically — 23:30 to 07:00 is 7.5 hours, attributed to the wake-up date.</p>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Sessions</div>
+      <span class="card-sub"><%= dateLabel %></span>
+    </div>
+    <div class="list" id="sleep-entries">
+      <% if (!day.entries.length) { %>
+        <div class="empty">
+          <i data-lucide="bed-double"></i>
+          <span>No sleep recorded for this date.</span>
+        </div>
+      <% } %>
+      <% day.entries.forEach(function (entry) { %>
+        <div class="list-item">
+          <span class="list-item-main">
+            <span class="list-item-title"><%= (entry.durationMinutes / 60).toFixed(1) %> h · <%= entry.quality.replace('_', ' ') %></span>
+            <span class="list-item-meta"><%= formatTime(entry.bedtime) %> → <%= formatTime(entry.wakeTime) %></span>
+          </span>
+          <button class="icon-btn" type="button" data-delete-sleep="<%= entry._id %>" aria-label="Delete sleep entry">
+            <i data-lucide="trash-2"></i>
+          </button>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section class="card tight">
+    <div class="card-head">
+      <div class="card-title">Last 14 nights</div>
+      <span class="card-sub">Hours slept</span>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-sleep" aria-label="Sleep duration for the last fourteen days" role="img"></canvas></div>
+  </section>
+</main>
+
+<script type="application/json" id="page-data"><%- safeJson({ dateKey: dateKey, history: history, targetMinutes: targetMinutes }) %></script>
+
+<%- include('partials/bottomnav', { active: active }) %>
+<%- include('partials/foot', { pageScript: 'sleep' }) %>
