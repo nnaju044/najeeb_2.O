@@ -4,11 +4,5 @@
     "app.js": {
       "includeFiles": "{views/**,public/**}"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/app.js"
-    }
-  ]
+  }
 }
