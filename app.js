@@ -15,6 +15,39 @@ const { requireAuth } = require('./middleware/auth');
 const { formatDateLong, formatDateShort, weekdayShort, hourRangeLabel, formatTimeInTimezone } = require('./utils/date');
 
 /**
+ * Normalizes URLs received in Vercel Serverless environment.
+ * When Vercel rewrites (e.g. /(.*) -> /app.js), req.url arrives as /app.js
+ * while the original requested client path is passed via x-matched-path or related headers.
+ */
+function resolveOriginalUrl(req) {
+  const headerPath =
+    req.headers['x-matched-path'] ||
+    req.headers['x-forwarded-uri'] ||
+    req.headers['x-original-url'];
+
+  const rawUrl = req.url || '/';
+  const queryIndex = rawUrl.indexOf('?');
+  const query = queryIndex !== -1 ? rawUrl.slice(queryIndex) : '';
+
+  if (headerPath && headerPath !== '/app.js') {
+    const cleanHeaderPath = headerPath.split('?')[0];
+    return cleanHeaderPath + query;
+  }
+
+  // Handle direct rewrite to /app.js
+  if (rawUrl === '/app.js' || rawUrl.startsWith('/app.js?')) {
+    return '/' + query;
+  }
+
+  // Handle /app.js/subpath
+  if (rawUrl.startsWith('/app.js/')) {
+    return rawUrl.slice(7);
+  }
+
+  return rawUrl;
+}
+
+/**
  * Build the Express app. Exported as a factory so tests can spin up an isolated
  * instance against an in-memory MongoDB.
  */
@@ -28,6 +61,19 @@ function createApp({
 
   const app = express();
   app.set('trust proxy', 1);
+
+  // Normalize Vercel rewritten URLs so Express routes match original requested paths
+  app.use((req, res, next) => {
+    const resolved = resolveOriginalUrl(req);
+    if (req.url !== resolved) {
+      req.url = resolved;
+    }
+    if (req.originalUrl === '/app.js' || req.originalUrl?.startsWith('/app.js?')) {
+      req.originalUrl = resolved;
+    }
+    next();
+  });
+
   app.set('view engine', 'ejs');
   const viewsDir = fs.existsSync(path.join(__dirname, 'views'))
     ? path.join(__dirname, 'views')
@@ -137,6 +183,7 @@ async function getOrCreateServerlessApp() {
  */
 async function serverlessHandler(req, res) {
   try {
+    req.url = resolveOriginalUrl(req);
     const app = await getOrCreateServerlessApp();
     return app(req, res);
   } catch (error) {
@@ -152,6 +199,7 @@ async function serverlessHandler(req, res) {
 
 // Preserve createApp named export for server.js and automated test harness
 serverlessHandler.createApp = createApp;
+serverlessHandler.resolveOriginalUrl = resolveOriginalUrl;
 serverlessHandler.default = serverlessHandler;
 
 module.exports = serverlessHandler;

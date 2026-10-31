@@ -65,4 +65,151 @@ test('6. engines.node pins to Node.js 22.x LTS for Vercel', () => {
   assert.equal(pkg.engines?.node, '22.x', 'package.json engines.node must be pinned to 22.x LTS');
 });
 
+test('7. resolveOriginalUrl correctly maps Vercel rewritten paths and query strings', () => {
+  const resolve = appEntry.resolveOriginalUrl;
+  assert.equal(typeof resolve, 'function');
+
+  // Vercel rewrite with x-matched-path
+  assert.equal(resolve({ url: '/app.js', headers: { 'x-matched-path': '/login' } }), '/login');
+  assert.equal(
+    resolve({ url: '/app.js?next=%2Fhealth', headers: { 'x-matched-path': '/login' } }),
+    '/login?next=%2Fhealth'
+  );
+  assert.equal(resolve({ url: '/app.js', headers: { 'x-matched-path': '/' } }), '/');
+  assert.equal(resolve({ url: '/app.js', headers: { 'x-matched-path': '/health' } }), '/health');
+
+  // Direct access to /app.js without header
+  assert.equal(resolve({ url: '/app.js', headers: {} }), '/');
+  assert.equal(resolve({ url: '/app.js?next=%2Ftest', headers: {} }), '/?next=%2Ftest');
+
+  // Standard non-rewritten URLs
+  assert.equal(resolve({ url: '/time', headers: {} }), '/time');
+  assert.equal(resolve({ url: '/login', headers: {} }), '/login');
+});
+
+test('8. simulated Vercel rewrite to /login returns HTTP 200 without redirect loop', async () => {
+  const server = http.createServer((req, res) => {
+    appEntry(req, res);
+  });
+
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+
+  try {
+    // Simulate Vercel routing to /app.js when client requested /login
+    const res = await fetch(`http://127.0.0.1:${port}/app.js`, {
+      headers: {
+        'x-matched-path': '/login',
+      },
+      redirect: 'manual',
+    });
+
+    assert.equal(res.status, 200, 'Must return 200 and not redirect on /login');
+    const html = await res.text();
+    assert.match(html, /Sign in/);
+    assert.doesNotMatch(html, /ERR_TOO_MANY_REDIRECTS/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('9. simulated Vercel rewrite to / redirects to /login once without /app.js in next param', async () => {
+  const server = http.createServer((req, res) => {
+    appEntry(req, res);
+  });
+
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+
+  try {
+    // Simulate Vercel routing to /app.js when client requested /
+    const res = await fetch(`http://127.0.0.1:${port}/app.js`, {
+      headers: {
+        'x-matched-path': '/',
+      },
+      redirect: 'manual',
+    });
+
+    assert.equal(res.status, 302);
+    const location = res.headers.get('location');
+    assert.equal(location, '/login?next=%2F');
+    assert.doesNotMatch(location, /app\.js/, 'Next parameter must never contain /app.js');
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('10. direct request to /app.js sanitizes next destination and prevents nested loops', async () => {
+  const server = http.createServer((req, res) => {
+    appEntry(req, res);
+  });
+
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+
+  try {
+    // Client directly sends /app.js?next=%2Fapp.js
+    const res = await fetch(`http://127.0.0.1:${port}/app.js?next=%2Fapp.js`, {
+      redirect: 'manual',
+    });
+
+    assert.equal(res.status, 302);
+    const location = res.headers.get('location');
+    assert.equal(location, '/login?next=%2F', 'Must collapse /app.js to root /');
+    assert.doesNotMatch(location, /app\.js/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('11. static assets are accessible without authentication', async () => {
+  const server = http.createServer((req, res) => {
+    appEntry(req, res);
+  });
+
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const port = server.address().port;
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/manifest.webmanifest`, {
+      redirect: 'manual',
+    });
+
+    assert.equal(res.status, 200, 'Static asset must return 200');
+    const json = await res.json();
+    assert.match(json.name, /Jeebs 2\.O/);
+    assert.equal(json.short_name, 'Jeebs');
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('12. requireAuth and safeNext prevent open redirects and loops', () => {
+  const { requireAuth } = require('../middleware/auth');
+
+  function runRequireAuth(url, originalUrl) {
+    let redirectedTo = null;
+    const req = { method: 'GET', url, originalUrl: originalUrl || url, get: () => '', user: null };
+    const res = { redirect: (loc) => { redirectedTo = loc; } };
+    requireAuth(req, res, () => {});
+    return redirectedTo;
+  }
+
+  // 1. Unauthenticated request to /time redirects to /login?next=%2Ftime
+  assert.equal(runRequireAuth('/time'), '/login?next=%2Ftime');
+
+  // 2. Unauthenticated request to root / redirects to /login?next=%2F (not /app.js)
+  assert.equal(runRequireAuth('/'), '/login?next=%2F');
+
+  // 3. Request with /app.js collapses to /
+  assert.equal(runRequireAuth('/app.js'), '/login?next=%2F');
+  assert.equal(runRequireAuth('/app.js?next=%2Fapp.js'), '/login?next=%2F');
+
+  // 4. Request already at /login never nests next
+  assert.equal(runRequireAuth('/login'), '/login?next=%2F');
+  assert.equal(runRequireAuth('/login?next=%2Fhealth'), '/login?next=%2F');
+});
+
+
+
 

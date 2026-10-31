@@ -19,6 +19,17 @@ const registerSchema = credentialsSchema.extend({
 function safeNext(value) {
   if (typeof value !== 'string') return '/';
   if (!value.startsWith('/') || value.startsWith('//')) return '/';
+  // Disallow redirecting back to auth pages, internal scripts, or recursive next chains
+  if (
+    value === '/login' ||
+    value.startsWith('/login?') ||
+    value === '/register' ||
+    value.startsWith('/register?') ||
+    value.startsWith('/app.js') ||
+    value.includes('next=')
+  ) {
+    return '/';
+  }
   return value;
 }
 
