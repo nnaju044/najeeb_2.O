@@ -16,21 +16,10 @@ const registerSchema = credentialsSchema.extend({
   startDate: z.string().trim().optional(),
 });
 
+const { sanitizeTarget } = require('../middleware/auth');
+
 function safeNext(value) {
-  if (typeof value !== 'string') return '/';
-  if (!value.startsWith('/') || value.startsWith('//')) return '/';
-  // Disallow redirecting back to auth pages, internal scripts, or recursive next chains
-  if (
-    value === '/login' ||
-    value.startsWith('/login?') ||
-    value === '/register' ||
-    value.startsWith('/register?') ||
-    value.startsWith('/app.js') ||
-    value.includes('next=')
-  ) {
-    return '/';
-  }
-  return value;
+  return sanitizeTarget(value);
 }
 
 async function accountExists() {
@@ -186,4 +175,13 @@ function logout(req, res) {
   });
 }
 
-module.exports = { showLogin, login, showRegister, register, logout, credentialsSchema, registerSchema };
+module.exports = {
+  showLogin,
+  login,
+  showRegister,
+  register,
+  logout,
+  credentialsSchema,
+  registerSchema,
+  safeNext,
+};
