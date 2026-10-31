@@ -5,7 +5,7 @@
   "description": "Jeebs 2.O — Build a better you. Personal 90-day life transformation and performance tracking app",
   "main": "server.js",
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "scripts": {
     "start": "node server.js",

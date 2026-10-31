@@ -60,3 +60,9 @@ test('5. production enforces required SESSION_SECRET and MONGODB_URI', () => {
   assert.match(appContent, /MONGODB_URI.*required/i, 'Must enforce MONGODB_URI');
 });
 
+test('6. engines.node pins to Node.js 22.x LTS for Vercel', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+  assert.equal(pkg.engines?.node, '22.x', 'package.json engines.node must be pinned to 22.x LTS');
+});
+
+

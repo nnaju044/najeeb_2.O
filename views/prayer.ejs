@@ -2,6 +2,7 @@
 <%- include('partials/topbar') %>
 
 <main class="app-main">
+  <%- include('partials/backnav', { to: '/health', label: 'Back to Health', dateKey: typeof dateKey !== 'undefined' ? dateKey : null, isToday: typeof isToday !== 'undefined' ? isToday : true }) %>
   <!-- Day navigation header -->
   <section class="card hero">
     <div class="between" style="align-items:center;margin-bottom:8px">

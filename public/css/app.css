@@ -217,19 +217,33 @@ svg {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   font-weight: 700;
-  letter-spacing: 0.14em;
-  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  font-size: 0.82rem;
+  line-height: 1;
 }
 
-.brand-logo {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+.brand-logo,
+.brand img {
+  width: 1.25em;
+  height: 1.25em;
+  max-width: 20px;
+  max-height: 20px;
+  border-radius: 5px;
   object-fit: contain;
-  display: block;
+  display: inline-block;
+  vertical-align: middle;
   flex-shrink: 0;
+}
+
+.auth-hero .brand-logo {
+  width: 48px;
+  height: 48px;
+  max-width: 48px;
+  max-height: 48px;
+  border-radius: 12px;
+  margin: 0 auto 10px;
 }
 
 .brand-mark {
@@ -290,6 +304,58 @@ svg {
   height: 18px;
   stroke: var(--muted);
   stroke-width: 2;
+}
+/* ── sub-navigation & back navigation ────────────────────────────────────────── */
+
+.subnav-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 6px 13px 6px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  transition: color 150ms var(--ease), border-color 150ms var(--ease), background 150ms var(--ease), transform 150ms var(--ease);
+}
+
+.back-link:hover,
+.back-link:focus-visible {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--surface-3);
+  transform: translateX(-2px);
+}
+
+.back-link:active {
+  transform: scale(0.97) translateX(-2px);
+}
+
+.back-link svg,
+.back-link i,
+.back-link .back-arrow {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  flex-shrink: 0;
+  transition: transform 150ms var(--ease);
+}
+
+.back-link:hover svg,
+.back-link:hover i,
+.back-link:hover .back-arrow {
+  transform: translateX(-2px);
 }
 
 /* ── bottom nav ──────────────────────────────────────────────────────────── */

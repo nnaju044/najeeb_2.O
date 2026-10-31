@@ -1,0 +1,18 @@
+<%
+  const targetDate = typeof dateKey !== 'undefined' && dateKey ? dateKey : null;
+  const isTargetToday = typeof isToday !== 'undefined' ? isToday : false;
+  let targetUrl = typeof to !== 'undefined' && to ? to : '/health';
+  if (targetDate && !isTargetToday) {
+    targetUrl += (targetUrl.includes('?') ? '&' : '?') + 'date=' + encodeURIComponent(targetDate);
+  }
+  const navLabel = typeof label !== 'undefined' && label ? label : 'Back to Health';
+%>
+<nav class="subnav-bar" aria-label="Breadcrumb navigation">
+  <a href="<%= targetUrl %>" class="back-link" data-back-to-health aria-label="<%= navLabel %>">
+    <svg class="back-arrow" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m12 19-7-7 7-7"></path>
+      <path d="M19 12H5"></path>
+    </svg>
+    <span><%= navLabel %></span>
+  </a>
+</nav>

@@ -23,6 +23,7 @@ const router = express.Router();
 
 router.get('/', asyncHandler(dashboardController.index));
 router.get('/health', asyncHandler(healthController.show));
+router.get('/health/:dateKey', asyncHandler(healthController.show));
 router.get('/prayer', asyncHandler(prayerController.show));
 router.get('/prayer/:dateKey', asyncHandler(prayerController.show));
 
