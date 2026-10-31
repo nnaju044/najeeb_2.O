@@ -16,30 +16,12 @@ const { formatDateLong, formatDateShort, weekdayShort, hourRangeLabel, formatTim
 
 /**
  * Normalizes URLs received in Vercel Serverless environment.
- * When Vercel rewrites (e.g. /(.*) -> /app.js), req.url arrives as /app.js
- * while the original requested client path is passed via x-matched-path or related headers.
+ * Preserves the client's actual requested path without relying on undocumented headers.
  */
 function resolveOriginalUrl(req) {
-  const headerPath =
-    req.headers['x-matched-path'] ||
-    req.headers['x-forwarded-uri'] ||
-    req.headers['x-original-url'];
+  const rawUrl = req?.url || '/';
 
-  const rawUrl = req.url || '/';
-  const queryIndex = rawUrl.indexOf('?');
-  const query = queryIndex !== -1 ? rawUrl.slice(queryIndex) : '';
-
-  if (headerPath && headerPath !== '/app.js') {
-    const cleanHeaderPath = headerPath.split('?')[0];
-    return cleanHeaderPath + query;
-  }
-
-  // Handle direct rewrite to /app.js
-  if (rawUrl === '/app.js' || rawUrl.startsWith('/app.js?')) {
-    return '/' + query;
-  }
-
-  // Handle /app.js/subpath
+  // Handle /app.js/subpath if an edge proxy prepended the script name
   if (rawUrl.startsWith('/app.js/')) {
     return rawUrl.slice(7);
   }
@@ -62,14 +44,11 @@ function createApp({
   const app = express();
   app.set('trust proxy', 1);
 
-  // Normalize Vercel rewritten URLs so Express routes match original requested paths
+  // Normalize request URLs so Express routes match original requested paths
   app.use((req, res, next) => {
     const resolved = resolveOriginalUrl(req);
     if (req.url !== resolved) {
       req.url = resolved;
-    }
-    if (req.originalUrl === '/app.js' || req.originalUrl?.startsWith('/app.js?')) {
-      req.originalUrl = resolved;
     }
     next();
   });
