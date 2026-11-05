@@ -44,6 +44,7 @@ router.get('/sleep', asyncHandler(sleepController.show));
 router.get('/sleep/:dateKey', asyncHandler(sleepController.show));
 
 router.get('/gym', asyncHandler(gymController.show));
+router.get('/gym/:dateKey', asyncHandler(gymController.show));
 router.get('/weight', asyncHandler(weightController.show));
 
 router.get('/habits', asyncHandler(habitController.show));

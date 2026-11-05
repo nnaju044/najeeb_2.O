@@ -23,7 +23,7 @@ test('login page is accessible to guests', async () => {
 
 test('registration creates user account and signs them in', async () => {
   const { response } = await registerOwner(context.agent);
-  assert.equal(response.status, 302);
+  assert.equal(response.status, 303);
   assert.equal(response.headers.location, '/challenge');
 
   const challengePage = await context.agent.get('/challenge');
@@ -44,7 +44,7 @@ test('multiple users can register with unique emails', async () => {
       confirmPassword: 'another-password-123',
       name: 'Second User',
     });
-  assert.equal(response.status, 302);
+  assert.equal(response.status, 303);
   assert.equal(response.headers.location, '/challenge');
 });
 
@@ -107,7 +107,7 @@ test('state-changing requests require a CSRF token', async () => {
 test('login regenerates the session id and sets an httpOnly cookie', async () => {
   const other = require('supertest').agent(context.app);
   const response = await login(other, 'owner@example.com', 'strong-password-123');
-  assert.equal(response.status, 302);
+  assert.equal(response.status, 303);
 
   const cookies = response.headers['set-cookie'] || [];
   const sessionCookie = cookies.find((cookie) => cookie.startsWith('lifeos.sid='));
@@ -121,11 +121,70 @@ test('logout clears the session', async () => {
   await login(other, 'owner@example.com', 'strong-password-123');
   const token = await getCsrf(other, '/settings');
   const logout = await other.post('/logout').type('form').send({ _csrf: token });
-  assert.equal(logout.status, 302);
+  assert.equal(logout.status, 303);
 
   const dashboard = await other.get('/');
   assert.equal(dashboard.status, 302);
   assert.match(dashboard.headers.location, /^\/login/);
+});
+
+test('login redirect semantics: POST /login responds with 303 and transitions safely to GET target', async () => {
+  const client = require('supertest').agent(context.app);
+  const token = await getCsrf(client, '/login');
+
+  // Submit valid login with next=/time
+  const postRes = await client
+    .post('/login')
+    .type('form')
+    .send({
+      _csrf: token,
+      email: 'owner@example.com',
+      password: 'strong-password-123',
+      next: '/time',
+    });
+
+  // Must respond with 303 See Other, pointing to /time
+  assert.equal(postRes.status, 303);
+  assert.equal(postRes.headers.location, '/time');
+
+  // Follow with GET to target using authenticated session
+  const getRes = await client.get(postRes.headers.location);
+  assert.equal(getRes.status, 200);
+  assert.match(getRes.text, /24-hour/i);
+});
+
+test('login redirect semantics: default next parameter falls back safely to root /', async () => {
+  const client = require('supertest').agent(context.app);
+  const token = await getCsrf(client, '/login');
+
+  const postRes = await client
+    .post('/login')
+    .type('form')
+    .send({
+      _csrf: token,
+      email: 'owner@example.com',
+      password: 'strong-password-123',
+    });
+
+  assert.equal(postRes.status, 303);
+  assert.equal(postRes.headers.location, '/');
+});
+
+test('login validation: malformed credentials reject with 400', async () => {
+  const client = require('supertest').agent(context.app);
+  const token = await getCsrf(client, '/login');
+
+  const res = await client
+    .post('/login')
+    .type('form')
+    .send({
+      _csrf: token,
+      email: 'invalid-email',
+      password: 'short',
+    });
+
+  assert.equal(res.status, 400);
+  assert.match(res.text, /Enter a valid email address/i);
 });
 
 test('security headers and a strict script CSP are present', async () => {

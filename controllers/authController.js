@@ -83,7 +83,7 @@ async function login(req, res) {
   await regenerateSession(req);
   req.session.userId = user._id.toString();
   await saveSession(req);
-  return res.redirect(safeNext(req.body.next));
+  return res.redirect(303, safeNext(req.body.next));
 }
 
 async function showRegister(req, res) {
@@ -165,13 +165,13 @@ async function register(req, res) {
   await regenerateSession(req);
   req.session.userId = user._id.toString();
   await saveSession(req);
-  return res.redirect(started ? '/' : '/challenge');
+  return res.redirect(303, started ? '/' : '/challenge');
 }
 
 function logout(req, res) {
   req.session.destroy(() => {
     res.clearCookie('lifeos.sid');
-    res.redirect('/login');
+    res.redirect(303, '/login');
   });
 }
 

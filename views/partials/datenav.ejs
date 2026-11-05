@@ -1,21 +1,27 @@
-<div class="card tight">
-  <div class="between">
-    <a class="icon-btn" href="<%= basePath %>/<%= prevDate %>" aria-label="Previous day">
-      <i data-lucide="chevron-left"></i>
-    </a>
-    <div class="center">
-      <div class="card-title"><%= label %></div>
-      <div class="card-sub"><%= sub %></div>
-    </div>
-    <% if (nextDate) { %>
-      <a class="icon-btn" href="<%= basePath %>/<%= nextDate %>" aria-label="Next day">
-        <i data-lucide="chevron-right"></i>
+<% const prevHref=basePath ? `${basePath}/${prevDate}` : prevDate; const nextHref=nextDate ? (basePath ?
+  `${basePath}/${nextDate}` : nextDate) : null; const todayHref=basePath || '/' ; %>
+  <div class="card tight">
+    <div class="between">
+      <a class="icon-btn" href="<%= prevHref %>" aria-label="Previous day">
+        <i data-lucide="chevron-left"></i>
       </a>
-    <% } else { %>
-      <span class="icon-btn" style="opacity:.35" aria-hidden="true"><i data-lucide="chevron-right"></i></span>
-    <% } %>
+      <div class="center">
+        <div class="card-title">
+          <%= label %>
+        </div>
+        <div class="card-sub">
+          <%= sub %>
+        </div>
+      </div>
+      <% if (nextHref) { %>
+        <a class="icon-btn" href="<%= nextHref %>" aria-label="Next day">
+          <i data-lucide="chevron-right"></i>
+        </a>
+        <% } else { %>
+          <span class="icon-btn" style="opacity:.35" aria-hidden="true"><i data-lucide="chevron-right"></i></span>
+          <% } %>
+    </div>
+    <% if (typeof isToday !=='undefined' && !isToday) { %>
+      <a class="center small muted" href="<%= todayHref %>">Back to today</a>
+      <% } %>
   </div>
-  <% if (typeof isToday !== 'undefined' && !isToday) { %>
-    <a class="center small muted" href="<%= basePath %>">Back to today</a>
-  <% } %>
-</div>

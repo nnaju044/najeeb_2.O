@@ -2,6 +2,8 @@
 <%- include('partials/topbar') %>
 
 <main class="app-main">
+  <%- include('partials/datenav', { basePath: '/health', prevDate: prevDate, nextDate: nextDate, label: dateLabel, sub: weekday, isToday: isToday }) %>
+
   <section class="card hero">
     <div class="hero-head">
       <div class="stack-sm">

@@ -13,6 +13,7 @@
     <p class="note">Nothing is pre-filled. Every number you see later comes from what you log.</p>
   </section>
 <% } else { %>
+  <%- include('partials/datenav', { basePath: '', prevDate: '?date=' + prevDate, nextDate: nextDate ? '?date=' + nextDate : null, label: dateLabel, sub: weekday, isToday: isToday }) %>
 
   <section class="card hero">
     <div class="hero-head">

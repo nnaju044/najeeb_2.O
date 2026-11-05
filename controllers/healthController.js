@@ -6,7 +6,7 @@ const sleepService = require('../services/sleepService');
 const weightService = require('../services/weightService');
 const habitService = require('../services/habitService');
 const metricsService = require('../services/metricsService');
-const { currentDateKey, isValidDateKey, addDays, formatDateLong } = require('../utils/date');
+const { currentDateKey, isValidDateKey, addDays, diffDays, formatDateLong, weekdayName } = require('../utils/date');
 
 async function show(req, res) {
   const todayKey = currentDateKey();
@@ -28,6 +28,9 @@ async function show(req, res) {
     active: 'health',
     todayKey: dateKey,
     todayLabel: formatDateLong(dateKey),
+    dateKey,
+    dateLabel: formatDateLong(dateKey),
+    weekday: weekdayName(dateKey),
     water: waterService.summarize(waterDay.totalMl, targets.waterMl, waterDay.entries),
     nutrition: nutritionService.summarize(mealDay.totals, targets),
     sleep: sleepDay,
@@ -35,6 +38,9 @@ async function show(req, res) {
     weight,
     habits,
     metrics: metrics[0],
+    prevDate: addDays(dateKey, -1),
+    nextDate: diffDays(dateKey, todayKey) < 0 ? addDays(dateKey, 1) : null,
+    isToday: dateKey === todayKey,
     yesterday: addDays(todayKey, -1),
   });
 }

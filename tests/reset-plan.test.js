@@ -125,7 +125,7 @@ test('3. Resetting User A plan does not touch User B challenge or tracked record
     confirmPassword: 'passwordB-12345',
     startDate: '2026-10-15',
   });
-  assert.equal(regB.status, 302);
+  assert.equal(regB.status, 303);
   const userB = await User.findOne({ email: 'user_b_reset@example.com' });
 
   // Populate tracked data for User B

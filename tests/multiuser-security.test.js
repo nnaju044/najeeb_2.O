@@ -44,7 +44,7 @@ test.before(async () => {
       name: 'User Alpha',
       startDate: YESTERDAY,
     });
-  assert.equal(regA.status, 302);
+  assert.equal(regA.status, 303);
   userA = await User.findOne({ email: 'user_a@example.com' });
 
   // Register User B
@@ -61,7 +61,7 @@ test.before(async () => {
       name: 'User Beta',
       startDate: TODAY,
     });
-  assert.equal(regB.status, 302);
+  assert.equal(regB.status, 303);
   userB = await User.findOne({ email: 'user_b@example.com' });
 });
 
@@ -340,5 +340,5 @@ test('8. Password change verifies current password and updates securely', async 
   assert.equal(oldLogin.status, 401, 'Old password should no longer work');
 
   const newLogin = await login(freshAgent, 'user_b@example.com', 'new-password-12345');
-  assert.equal(newLogin.status, 302, 'New password should successfully authenticate');
+  assert.equal(newLogin.status, 303, 'New password should successfully authenticate');
 });

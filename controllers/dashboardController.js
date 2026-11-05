@@ -4,11 +4,13 @@ const dashboardService = require('../services/dashboardService');
 const achievementService = require('../services/achievementService');
 const reportService = require('../services/reportService');
 const dailyLogService = require('../services/dailyLogService');
-const { currentDateKey, isValidDateKey } = require('../utils/date');
+const { currentDateKey, isValidDateKey, addDays, diffDays, formatDateLong, weekdayName } = require('../utils/date');
 const { BEDTIME_PRESETS, WAKE_PRESETS, MEAL_TYPES, MEAL_LABELS, WATER_PRESETS, WORK_CATEGORIES, WORKOUT_TYPES } = require('../config/constants');
 
 async function index(req, res) {
-  const dateKey = isValidDateKey(req.query.date) ? req.query.date : currentDateKey();
+  const todayKey = currentDateKey();
+  const requested = req.query?.date;
+  const dateKey = requested && isValidDateKey(requested) ? requested : todayKey;
   const challenge = res.locals.challenge;
 
   if (!challenge) {
@@ -39,6 +41,11 @@ async function index(req, res) {
     prayerData,
     achievements: achievements.filter((entry) => entry.earned).slice(-3).reverse(),
     presets: { WATER_PRESETS, MEAL_TYPES, MEAL_LABELS, WORK_CATEGORIES, WORKOUT_TYPES, BEDTIME_PRESETS, WAKE_PRESETS },
+    prevDate: addDays(dateKey, -1),
+    nextDate: diffDays(dateKey, todayKey) < 0 ? addDays(dateKey, 1) : null,
+    isToday: dateKey === todayKey,
+    dateLabel: formatDateLong(dateKey),
+    weekday: weekdayName(dateKey),
   });
 }
 

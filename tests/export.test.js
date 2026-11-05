@@ -106,7 +106,7 @@ test('export endpoints return downloadable files only to the signed-in user', as
 test('one user cannot read or delete another user\u2019s data', async () => {
   const secondAgent = request.agent(context.app);
   const response = await login(secondAgent, 'second@example.com', 'second-password-123');
-  assert.equal(response.status, 302);
+  assert.equal(response.status, 303);
 
   const ownersEntry = await WaterEntry.findOne({ userId: owner._id });
   const attempt = await api(secondAgent, 'delete', `/api/water/${ownersEntry._id}`);

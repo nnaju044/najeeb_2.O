@@ -1,19 +1,21 @@
 'use strict';
 
 const workoutService = require('../services/workoutService');
-const { currentDateKey, addDays, diffDays, formatDateLong, weekdayName } = require('../utils/date');
+const { currentDateKey, isValidDateKey, addDays, diffDays, formatDateLong, weekdayName } = require('../utils/date');
 const { WORKOUT_TYPES, MUSCLE_GROUPS } = require('../config/constants');
 
 async function show(req, res) {
   const todayKey = currentDateKey();
-  const from = addDays(todayKey, -6);
+  const requested = req.params?.dateKey || req.query?.date;
+  const dateKey = requested && isValidDateKey(requested) ? requested : todayKey;
+  const from = addDays(dateKey, -6);
   const targets = res.locals.challenge?.targets;
   const [weekStats, history, exercises, streak, weekly] = await Promise.all([
-    workoutService.getRangeWeekStats(req.user._id, from, todayKey, targets?.workoutsPerWeek ?? 2),
+    workoutService.getRangeWeekStats(req.user._id, from, dateKey, targets?.workoutsPerWeek ?? 2),
     workoutService.getHistory(req.user._id, 20),
     workoutService.listExercises(req.user._id),
     workoutService.getStreak(req.user._id),
-    workoutService.getWeeklyConsistency(req.user._id, addDays(todayKey, -27), todayKey),
+    workoutService.getWeeklyConsistency(req.user._id, addDays(dateKey, -27), dateKey),
   ]);
 
   const exerciseName = req.query.exercise || history.flatMap((workout) => workout.exercises || [])[0]?.name || '';
@@ -23,9 +25,11 @@ async function show(req, res) {
     title: 'Gym',
     page: 'gym',
     active: 'gym',
-    todayKey,
-    todayLabel: formatDateLong(todayKey),
-    weekday: weekdayName(todayKey),
+    todayKey: dateKey,
+    todayLabel: formatDateLong(dateKey),
+    dateKey,
+    dateLabel: formatDateLong(dateKey),
+    weekday: weekdayName(dateKey),
     weekStats,
     history,
     exercises,
@@ -36,6 +40,9 @@ async function show(req, res) {
     targets: targets || { workoutsPerWeek: 2 },
     exerciseName,
     progression,
+    prevDate: addDays(dateKey, -1),
+    nextDate: diffDays(dateKey, todayKey) < 0 ? addDays(dateKey, 1) : null,
+    isToday: dateKey === todayKey,
   });
 }
 
